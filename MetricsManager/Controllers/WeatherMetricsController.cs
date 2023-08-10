@@ -15,7 +15,8 @@ namespace MetricsManager
             _temperatureRepo = temperatureRepo;
         }
 
-        [HttpGet]
+        [Route("getAll")]
+        [HttpGet]        
         public IActionResult GetTemperaturesAll()
         {
             var temperatures = _temperatureRepo.GetTemperaturesAll();
@@ -38,7 +39,7 @@ namespace MetricsManager
 
             return Ok(temperatures);
         }
-
+        [Route("save")]
         [HttpPost]
         public IActionResult SaveTemperature([FromQuery] DateTime timeStamp, [FromQuery] double temperature)
         {
@@ -46,7 +47,8 @@ namespace MetricsManager
             return Ok();
         }
 
-        [HttpPost]
+        [Route("edit")]
+        [HttpPost]        
         public IActionResult EditTemperature([FromQuery] DateTime timeStamp, [FromQuery] double newTemperature)
         {
             _temperatureRepo.EditTemperature(timeStamp, newTemperature);
