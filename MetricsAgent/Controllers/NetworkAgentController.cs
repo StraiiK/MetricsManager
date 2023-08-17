@@ -1,6 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MetricsAgent.DAL.InterfaceDal;
+using MetricsAgent.Models;
+using MetricsAgent.Requests;
+using MetricsAgent.Responses;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 
 namespace MetricsAgent.Controllers
 {
@@ -8,10 +14,79 @@ namespace MetricsAgent.Controllers
     [ApiController]
     public class NetworkAgentController : ControllerBase
     {
-        [HttpGet("from/{fromTime}/to/{toTime}")]
-        public IActionResult GetMetricsFromAgent([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+        private readonly ILogger<NetworkAgentController> _logger;
+        private INetworkMetricsRepository _repository;
+
+        public NetworkAgentController(INetworkMetricsRepository repository, ILogger<NetworkAgentController> logger)
         {
+            _repository = repository;
+            _logger = logger;
+            _logger.LogDebug(1, "NLog встроен в NetworkAgentController");
+        }
+
+        [HttpPost("create")]
+        public IActionResult Create([FromBody] BaseMetricCreateRequest request)
+        {
+            _repository.Create(new BaseMetricModel
+            {
+                Time = request.Time,
+                Value = request.Value
+            });
+            _logger.LogInformation($"Параметры метода:{request.Time}_{request.Value}");
             return Ok();
+        }
+
+        [HttpGet("getall")]
+        public IActionResult GetAll()
+        {
+            var metrics = _repository.GetAll();
+
+            var response = new AllBaseMetricsResponse()
+            {
+                Metrics = new List<BaseMetricDto>()
+            };
+
+            if (metrics != null)
+            {
+                foreach (var item in metrics)
+                {
+                    response.Metrics.Add(new BaseMetricDto
+                    {
+                        Id = item.Id,
+                        Value = item.Value,
+                        Time = item.Time
+                    });
+                }
+            }
+
+            _logger.LogInformation($"Выполнен метод GetAll");
+            return Ok(response);
+        }
+
+        [HttpGet("getbytime")]
+        public IActionResult GetByPeriod([FromBody] BaseMetricGetByPeriodRequest request)
+        {
+            var metrics = _repository.GetByTimePeriod(request.fromTime, request.toTime);
+
+            var response = new AllBaseMetricsResponse()
+            {
+                Metrics = new List<BaseMetricDto>()
+            };
+            if (metrics != null)
+            {
+                foreach (var item in metrics)
+                {
+                    response.Metrics.Add(new BaseMetricDto
+                    {
+                        Id = item.Id,
+                        Value = item.Value,
+                        Time = item.Time
+                    });
+                }
+            }
+
+            _logger.LogInformation($"Параметры метода:{request.fromTime}_{request.toTime}");
+            return Ok(response);
         }
     }
 }

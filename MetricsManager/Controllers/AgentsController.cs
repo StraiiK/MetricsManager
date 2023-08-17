@@ -10,7 +10,7 @@ namespace MetricsManager.Controllers
     public class AgentsController : ControllerBase
     {
         [HttpPost("register")]
-        public IActionResult RegisterAgent([FromBody] AgentInfo agentInfo)
+        public IActionResult RegisterAgent([FromBody] RegisterAgentRequest agentInfo)
         {
             return Ok();
         }

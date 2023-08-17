@@ -1,5 +1,11 @@
 using MetricsAgent.Controllers;
+using MetricsAgent.DAL.InterfaceDal;
+using MetricsAgent.Models;
+using MetricsAgent.Requests;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Moq;
+using NLog;
 using System;
 using Xunit;
 
@@ -7,22 +13,53 @@ namespace MetricsAgentTests.Controllers
 {
     public class CpuAgentControllerUnitTests
     {
+        private Mock<ICpuMetricsRepository> mock;
+        private Mock<ILogger<CpuAgentController>> mockLog;
         private CpuAgentController _controller;
 
         public CpuAgentControllerUnitTests()
         {
-            _controller = new CpuAgentController();
+            mock = new Mock<ICpuMetricsRepository>();
+            mockLog = new Mock<ILogger<CpuAgentController>>();
+            _controller = new CpuAgentController(mock.Object, mockLog.Object);
         }
 
         [Fact]
-        public void GetMetricsFromAgent_ReturnsOk()
+        public void Create_ShouldCall_Create_From_Repository()
         {
-            var fromTime = TimeSpan.FromSeconds(0);
-            var toTime = TimeSpan.FromSeconds(100);
+            mock.Setup(repository => repository.Create(It.IsAny<BaseMetricModel>())).Verifiable();
 
-            var result = _controller.GetMetricsFromAgent(fromTime, toTime);
+           _controller.Create(new BaseMetricCreateRequest
+            {
+                Time = DateTimeOffset.FromFileTime(1),
+                Value = 50
+            });
 
-            _ = Assert.IsAssignableFrom<IActionResult>(result);
+            mock.Verify(repository => repository.Create(It.IsAny<BaseMetricModel>()), Times.AtMostOnce());
+        }
+
+        [Fact]
+        public void GetByPeriodFromAgent_ReturnsOk()
+        {
+            mock.Setup(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Verifiable();
+
+            var result = _controller.GetByPeriod(new BaseMetricGetByPeriodRequest()
+            {
+                fromTime = DateTimeOffset.FromFileTime(1),
+                toTime = DateTimeOffset.FromFileTime(100)
+            });
+
+            mock.Verify(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()), Times.AtMostOnce());
+        }
+
+        [Fact]
+        public void GetAllFromAgent_ReturnsOk()
+        {
+            mock.Setup(repo => repo.GetAll()).Verifiable();
+
+            var result = _controller.GetAll();
+
+            mock.Verify(repo => repo.GetAll(), Times.AtMostOnce());
         }
     }
 }

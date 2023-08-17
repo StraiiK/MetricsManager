@@ -11,11 +11,11 @@ namespace MetricsManagerTests.Controllers
     public class AgentsControllerUnitTests
     {
         private AgentsController _controller;
-        private AgentInfo _agentInfo;
+        private RegisterAgentRequest _agentInfo;
         public AgentsControllerUnitTests()
         {
             _controller = new AgentsController();
-            _agentInfo = new AgentInfo();
+            _agentInfo = new RegisterAgentRequest();
         }
 
         [Fact]

@@ -2,7 +2,7 @@
 
 namespace MetricsManager.Requests
 {
-    public class AgentInfo
+    public class RegisterAgentRequest
     {
         public int AgentId { get; }
         public Uri AgentAdress { get; }
