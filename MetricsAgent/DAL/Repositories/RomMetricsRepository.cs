@@ -1,38 +1,38 @@
-﻿using MetricsAgent.DAL.InterfaceDal;
-using MetricsAgent.Models;
+﻿using MetricsAgent.DAL.Interfaces;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System;
+using MetricsAgent.DAL.Models;
 
-namespace MetricsAgent.DAL
+namespace MetricsAgent.DAL.Repositories
 {
-    public class NetworkMetricsRepository : INetworkMetricsRepository
+    public class RomMetricsRepository : IRomMetricsRepository
     {
         private IConnectionManager _connectionManager;
 
-        public NetworkMetricsRepository(IConnectionManager connectionManager)
+        public RomMetricsRepository(IConnectionManager connectionManager)
         {
             _connectionManager = connectionManager;
         }
 
-        public IList<BaseMetricModel> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public IList<RomMetricModel> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
             using var connection = _connectionManager.CreateOpenedConnection();
             using var cmd = new SQLiteCommand(connection);
 
-            cmd.CommandText = "SELECT * FROM NetworkMetrics WHERE time >= @fromTime AND time <= @toTime";
+            cmd.CommandText = "SELECT * FROM RomMetrics WHERE time >= @fromTime AND time <= @toTime";
 
             cmd.Parameters.AddWithValue("@fromTime", fromTime.ToUnixTimeSeconds());
             cmd.Parameters.AddWithValue("@toTime", toTime.ToUnixTimeSeconds());
             cmd.Prepare();
 
-            var retirnList = new List<BaseMetricModel>();
+            var retirnList = new List<RomMetricModel>();
 
             using (SQLiteDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    retirnList.Add(new BaseMetricModel
+                    retirnList.Add(new RomMetricModel
                     {
                         Id = reader.GetInt32(0),
                         Value = reader.GetInt32(1),
@@ -44,20 +44,20 @@ namespace MetricsAgent.DAL
             return retirnList;
         }
 
-        public IList<BaseMetricModel> GetAll()
+        public IList<RomMetricModel> GetAll()
         {
             using var connection = _connectionManager.CreateOpenedConnection();
             using var cmd = new SQLiteCommand(connection);
 
-            cmd.CommandText = "SELECT * FROM NetworkMetrics";
+            cmd.CommandText = "SELECT * FROM RomMetrics";
 
-            var returnList = new List<BaseMetricModel>();
+            var returnList = new List<RomMetricModel>();
 
             using (SQLiteDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    returnList.Add(new BaseMetricModel
+                    returnList.Add(new RomMetricModel
                     {
                         Id = reader.GetInt32(0),
                         Value = reader.GetInt32(1),
@@ -68,12 +68,12 @@ namespace MetricsAgent.DAL
             return returnList;
         }
 
-        public void Create(BaseMetricModel item)
+        public void Create(RomMetricModel item)
         {
             using var connection = _connectionManager.CreateOpenedConnection();
             using var cmd = new SQLiteCommand(connection);
 
-            cmd.CommandText = "INSERT INTO NetworkMetrics(value, time) VALUES(@value, @time)";
+            cmd.CommandText = "INSERT INTO RomMetrics(value, time) VALUES(@value, @time)";
 
             cmd.Parameters.AddWithValue("@value", item.Value);
             cmd.Parameters.AddWithValue("@time", item.Time.ToUnixTimeSeconds());

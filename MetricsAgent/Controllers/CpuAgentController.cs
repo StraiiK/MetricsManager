@@ -1,5 +1,6 @@
-﻿using MetricsAgent.DAL.InterfaceDal;
-using MetricsAgent.Models;
+﻿using MetricsAgent.DAL.Interfaces;
+using MetricsAgent.DAL.Models;
+using MetricsAgent.DTO;
 using MetricsAgent.Requests;
 using MetricsAgent.Responses;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace MetricsAgent.Controllers
 {
@@ -21,13 +24,13 @@ namespace MetricsAgent.Controllers
         {
             _repository = repository;
             _logger = logger;
-            _logger.LogDebug(1, "NLog встроен в CpuAgentController");
+            _logger.LogDebug("NLog встроен в CpuAgentController");
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] BaseMetricCreateRequest request)
+        public IActionResult Create([FromBody] CpuMetricCreateRequest request)
         {
-            _repository.Create(new BaseMetricModel
+            _repository.Create(new CpuMetricModel
             {
                 Time = request.Time,
                 Value = request.Value
@@ -41,51 +44,36 @@ namespace MetricsAgent.Controllers
         {
             var metrics = _repository.GetAll();
 
-            var response = new AllBaseMetricsResponse()
+            var response = new AllCpuMetricsResponse()
             {
-                Metrics = new List<BaseMetricDto>()
-            };
-
-            if (metrics != null)
-            {
-                foreach (var item in metrics)
+                Metrics = metrics.Select(x => new CpuMetricDto
                 {
-                    response.Metrics.Add(new BaseMetricDto
-                    {
-                        Id = item.Id,
-                        Value = item.Value,
-                        Time = item.Time
-                    });
-                }
-            }
+                    Id = x.Id,
+                    Value = x.Value,
+                    Time = x.Time
+                }).ToList()
+            };
 
             _logger.LogInformation($"Выполнен метод GetAll");
             return Ok(response);
         }
 
-        [HttpGet("getbytime")]
-        public IActionResult GetByPeriod([FromBody] BaseMetricGetByPeriodRequest request)
+        [HttpGet("getbyperiod")]
+        public IActionResult GetByPeriod([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
         {
-            var metrics = _repository.GetByTimePeriod(request.fromTime, request.toTime);
+            var metrics = _repository.GetByTimePeriod(fromTime, toTime);
 
-            var response = new AllBaseMetricsResponse()
+            var response = new AllCpuMetricsResponse()
             {
-                Metrics = new List<BaseMetricDto>()
-            };
-            if (metrics != null)
-            {
-                foreach (var item in metrics)
+                Metrics = metrics.Select(x => new CpuMetricDto
                 {
-                    response.Metrics.Add(new BaseMetricDto
-                    {
-                        Id = item.Id,
-                        Value = item.Value,
-                        Time = item.Time
-                    });
-                }
-            }
+                    Id = x.Id,
+                    Value = x.Value,
+                    Time = x.Time
+                }).ToList()
+            };
 
-            _logger.LogInformation($"Параметры метода:{request.fromTime}_{request.toTime}");
+            _logger.LogInformation($"Параметры метода:{fromTime}_{toTime}");
             return Ok(response);
         }
     }

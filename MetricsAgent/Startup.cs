@@ -1,5 +1,4 @@
-using MetricsAgent.DAL.InterfaceDal;
-using MetricsAgent.DAL;
+using MetricsAgent.DAL.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -13,6 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data.SQLite;
+using MetricsAgent.DAL.Repositories;
+using MetricsAgent.DAL;
 
 namespace MetricsAgent
 {

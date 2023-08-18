@@ -1,9 +1,9 @@
-﻿using MetricsAgent.Models;
+﻿using MetricsAgent.DAL.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 
-namespace MetricsAgent.DAL.InterfaceDal
+namespace MetricsAgent.DAL.Interfaces
 {
     public interface IRepository<T> where T : class
     {

@@ -1,7 +1,8 @@
 ﻿using MetricsAgent.Controllers;
-using MetricsAgent.DAL.InterfaceDal;
-using MetricsAgent.Models;
+using MetricsAgent.DAL.Interfaces;
+using MetricsAgent.DAL.Models;
 using MetricsAgent.Requests;
+using MetricsAgent.Requests.CreateMetric;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -14,53 +15,50 @@ namespace MetricsAgentTests.Controllers
 {
     public class DotNetAgentControllerUnitTests
     {
-        private Mock<IDotNetMetricsRepository> mock;
-        private Mock<ILogger<DotNetAgentController>> mockLog;
+        private Mock<IDotNetMetricsRepository> _mock;
+        private Mock<ILogger<DotNetAgentController>> _mockLog;
         private DotNetAgentController _controller;
 
         public DotNetAgentControllerUnitTests()
         {
-            mock = new Mock<IDotNetMetricsRepository>();
-            mockLog = new Mock<ILogger<DotNetAgentController>>();
-            _controller = new DotNetAgentController(mock.Object, mockLog.Object);
+            _mock = new Mock<IDotNetMetricsRepository>();
+            _mockLog = new Mock<ILogger<DotNetAgentController>>();
+            _controller = new DotNetAgentController(_mock.Object, _mockLog.Object);
         }
 
         [Fact]
         public void Create_ShouldCall_Create_From_Repository()
         {
-            mock.Setup(repository => repository.Create(It.IsAny<BaseMetricModel>())).Verifiable();
+            _mock.Setup(repository => repository.Create(It.IsAny<DotNetMetricModel>())).Verifiable();
 
-            _controller.Create(new BaseMetricCreateRequest
+            _controller.Create(new DotNetMetricCreateRequest
             {
                 Time = DateTimeOffset.FromFileTime(1),
                 Value = 50
             });
 
-            mock.Verify(repository => repository.Create(It.IsAny<BaseMetricModel>()), Times.AtMostOnce());
+            _mock.Verify(repository => repository.Create(It.IsAny<DotNetMetricModel>()), Times.AtMostOnce());
         }
 
         [Fact]
         public void GetByPeriodFromAgent_ReturnsOk()
         {
-            mock.Setup(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Verifiable();
+            _mock.Setup(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns(new List<DotNetMetricModel>());
 
-            var result = _controller.GetByPeriod(new BaseMetricGetByPeriodRequest()
-            {
-                fromTime = DateTimeOffset.FromFileTime(1),
-                toTime = DateTimeOffset.FromFileTime(100)
-            });
+            var result = _controller.GetByPeriod(DateTimeOffset.FromFileTime(1), DateTimeOffset.FromFileTime(100));
 
-            mock.Verify(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()), Times.AtMostOnce());
+
+            _mock.Verify(repo => repo.GetByTimePeriod(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()), Times.AtMostOnce());
         }
 
         [Fact]
         public void GetAllFromAgent_ReturnsOk()
         {
-            mock.Setup(repo => repo.GetAll()).Verifiable();
+            _mock.Setup(repo => repo.GetAll()).Returns(new List<DotNetMetricModel>());
 
             var result = _controller.GetAll();
 
-            mock.Verify(repo => repo.GetAll(), Times.AtMostOnce());
+            _mock.Verify(repo => repo.GetAll(), Times.AtMostOnce());
         }
     }
 }

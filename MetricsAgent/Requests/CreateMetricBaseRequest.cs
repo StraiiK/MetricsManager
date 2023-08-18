@@ -2,7 +2,7 @@
 
 namespace MetricsAgent.Requests
 {
-    public class BaseMetricCreateRequest
+    public class CreateMetricBaseRequest
     {
         public int Value { get; set; }
         public DateTimeOffset Time { get; set; }

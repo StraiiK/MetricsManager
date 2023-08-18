@@ -11,7 +11,7 @@ namespace MetricsManagerTests.Controllers
 
         public CpuMetricsControllerUnitTests()
         {
-            _controller = new CpuMetricsController();
+            //_controller = new CpuMetricsController();
         }
 
         [Fact]

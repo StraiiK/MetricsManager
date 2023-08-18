@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace MetricsAgent.Responses
+namespace MetricsAgent.DTO
 {
-    public class BaseMetricDto
+    public class MetricBaseDto
     {
         public DateTimeOffset Time { get; set; }
         public int Value { get; set; }
