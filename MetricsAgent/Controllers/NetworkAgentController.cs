@@ -1,4 +1,5 @@
-﻿using MetricsAgent.DAL.Interfaces;
+﻿using AutoMapper;
+using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
 using MetricsAgent.Requests;
@@ -18,23 +19,21 @@ namespace MetricsAgent.Controllers
     {
         private readonly ILogger<NetworkAgentController> _logger;
         private INetworkMetricsRepository _repository;
+        private readonly IMapper _mapper;
 
-        public NetworkAgentController(INetworkMetricsRepository repository, ILogger<NetworkAgentController> logger)
+        public NetworkAgentController(INetworkMetricsRepository repository, ILogger<NetworkAgentController> logger, IMapper mapper)
         {
             _repository = repository;
             _logger = logger;
-            _logger.LogDebug(1, "NLog встроен в NetworkAgentController");
+            _logger.LogDebug(1, "NLog встроен в RomAgentController");
+            _mapper = mapper;
         }
 
         [HttpPost("create")]
         public IActionResult Create([FromBody] NetworkMetricCreateRequest request)
         {
-            _repository.Create(new NetworkMetricModel
-            {
-                Time = request.Time,
-                Value = request.Value
-            });
-            _logger.LogInformation($"Параметры метода:{request.Time}_{request.Value}");
+            _logger.LogInformation("Параметры метода:{@requestTime}_{@requestValue}", request.Time, request.Value);
+            _repository.Create(_mapper.Map<NetworkMetricDto>(request));
             return Ok();
         }
 
@@ -45,39 +44,25 @@ namespace MetricsAgent.Controllers
 
             var response = new AllNetworkMetricsResponse()
             {
-                Metrics = new List<NetworkMetricDto>()
+                Metrics = _mapper.Map<List<NetworkMetricDto>>(metrics)
             };
 
-            foreach (var item in metrics)
-            {
-                response.Metrics.Add(new NetworkMetricDto
-                {
-                    Id = item.Id,
-                    Value = item.Value,
-                    Time = item.Time
-                });
-            }
-
-            _logger.LogInformation($"Выполнен метод GetAll");
+            _logger.LogInformation($"Метод отработал");
             return Ok(response);
         }
 
         [HttpGet("getbyperiod")]
         public IActionResult GetByPeriod([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
         {
+            _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
             var metrics = _repository.GetByTimePeriod(fromTime, toTime);
 
             var response = new AllNetworkMetricsResponse()
             {
-                Metrics = metrics.Select(x => new NetworkMetricDto
-                {
-                    Id = x.Id,
-                    Value = x.Value,
-                    Time = x.Time
-                }).ToList()
+                Metrics = _mapper.Map<List<NetworkMetricDto>>(metrics)
             };
 
-            _logger.LogInformation($"Параметры метода:{fromTime}_{toTime}");
+            _logger.LogInformation("Метод отработал");
             return Ok(response);
         }
     }

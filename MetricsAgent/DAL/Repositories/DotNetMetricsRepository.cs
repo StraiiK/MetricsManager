@@ -3,83 +3,59 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System;
 using MetricsAgent.DAL.Models;
+using AutoMapper;
+using Dapper;
+using MetricsAgent.DTO;
+using System.Linq;
 
 namespace MetricsAgent.DAL.Repositories
 {
     public class DotNetMetricsRepository : IDotNetMetricsRepository
     {
         private IConnectionManager _connectionManager;
+        private IMapper _mapper;
 
-        public DotNetMetricsRepository(IConnectionManager connectionManager)
+        public DotNetMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
         {
             _connectionManager = connectionManager;
+            _mapper = mapper;
         }
 
-        public IList<DotNetMetricModel> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public IList<DotNetMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM DotNetMetrics WHERE time >= @fromTime AND time <= @toTime";
-
-            cmd.Parameters.AddWithValue("@fromTime", fromTime.ToUnixTimeSeconds());
-            cmd.Parameters.AddWithValue("@toTime", toTime.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            var retirnList = new List<DotNetMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                while (reader.Read())
+                var result = connection.Query<DotNetMetricDal>("SELECT * FROM DotNetMetrics WHERE time >= @fromTime AND time <= @toTime",
+                new
                 {
-                    retirnList.Add(new DotNetMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-
-            return retirnList;
+                    fromTime = fromTime.ToUnixTimeMilliseconds(),
+                    toTime = toTime.ToUnixTimeMilliseconds()
+                }).ToList();
+                return _mapper.Map<List<DotNetMetricDto>>(result);
+            };
         }
 
-        public IList<DotNetMetricModel> GetAll()
+        public IList<DotNetMetricDto> GetAll()
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM DotNetMetrics";
-
-            var returnList = new List<DotNetMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                while (reader.Read())
-                {
-                    returnList.Add(new DotNetMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-            return returnList;
+                var result = connection.Query<DotNetMetricDal>("SELECT * FROM DotNetMetrics").ToList();
+                return _mapper.Map<List<DotNetMetricDto>>(result);
+            };
         }
 
-        public void Create(DotNetMetricModel item)
+        public void Create(DotNetMetricDto item)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "INSERT INTO DotNetMetrics(value, time) VALUES(@value, @time)";
-
-            cmd.Parameters.AddWithValue("@value", item.Value);
-            cmd.Parameters.AddWithValue("@time", item.Time.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            cmd.ExecuteNonQuery();
+            using (var connection = _connectionManager.CreateOpenedConnection())
+            {
+                var metrics = _mapper.Map<DotNetMetricDal>(item);
+                connection.Execute("INSERT INTO DotNetMetrics(value, time) VALUES(@value, @time)",
+                new
+                {
+                    value = metrics.Value,
+                    time = metrics.Time
+                });
+            }
         }
     }
 }

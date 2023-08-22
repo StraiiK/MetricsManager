@@ -1,8 +1,9 @@
 ﻿using MetricsAgent.DAL.Models;
+using MetricsAgent.DTO;
 
 namespace MetricsAgent.DAL.Interfaces
 {
-    public interface IDotNetMetricsRepository : IRepository<DotNetMetricModel>
+    public interface IDotNetMetricsRepository : IRepository<DotNetMetricDto>
     {
     }
 }

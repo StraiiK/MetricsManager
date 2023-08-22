@@ -1,86 +1,61 @@
-﻿using Dapper;
+﻿using AutoMapper;
+using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
+using MetricsAgent.DTO;
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using System.Data;
+using System.Linq;
 
 namespace MetricsAgent.DAL.Repositories
 {
     public class CpuMetricsRepository : ICpuMetricsRepository
     {
         private IConnectionManager _connectionManager;
+        private IMapper _mapper;
 
-        public CpuMetricsRepository(IConnectionManager connectionManager)
-        {
-            _connectionManager = connectionManager;            
+        public CpuMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        {            
+            _connectionManager = connectionManager;
+            _mapper = mapper;
         }
 
-        public IList<CpuMetricModel> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public IList<CpuMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime";
-
-            cmd.Parameters.AddWithValue("@fromTime", fromTime.ToUnixTimeSeconds());
-            cmd.Parameters.AddWithValue("@toTime", toTime.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            var retirnList = new List<CpuMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
-            {
-                while (reader.Read())
+            using (var connection = _connectionManager.CreateOpenedConnection())
+            {                
+                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime",
+                new
                 {
-                    retirnList.Add(new CpuMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-
-            return retirnList;
+                    fromTime = fromTime.ToUnixTimeMilliseconds(),
+                    toTime = toTime.ToUnixTimeMilliseconds()
+                }).ToList();
+                return _mapper.Map<List<CpuMetricDto>>(result);
+            };
         }
 
-        public IList<CpuMetricModel> GetAll()
+        public IList<CpuMetricDto> GetAll()
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM CpuMetrics";
-
-            var returnList = new List<CpuMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                while (reader.Read())
-                {
-                    returnList.Add(new CpuMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-            return returnList;
+                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics").ToList();
+                return _mapper.Map<List<CpuMetricDto>>(result);
+            };
         }
 
-        public void Create(CpuMetricModel item)
+        public void Create(CpuMetricDto item)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "INSERT INTO CpuMetrics(value, time) VALUES(@value, @time)";
-
-            cmd.Parameters.AddWithValue("@value", item.Value);
-            cmd.Parameters.AddWithValue("@time", item.Time.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            cmd.ExecuteNonQuery();
+            using (var connection = _connectionManager.CreateOpenedConnection())
+            {
+                var metrics = _mapper.Map<CpuMetricDal>(item);
+                connection.Execute("INSERT INTO CpuMetrics(value, time) VALUES(@value, @time)",
+                new
+                {
+                    value = metrics.Value,
+                    time = metrics.Time
+                });
+            }
         }
     }
 }

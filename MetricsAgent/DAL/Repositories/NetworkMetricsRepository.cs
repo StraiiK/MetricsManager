@@ -3,83 +3,59 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System;
 using MetricsAgent.DAL.Models;
+using AutoMapper;
+using Dapper;
+using MetricsAgent.DTO;
+using System.Linq;
 
 namespace MetricsAgent.DAL.Repositories
 {
     public class NetworkMetricsRepository : INetworkMetricsRepository
     {
         private IConnectionManager _connectionManager;
+        private IMapper _mapper;
 
-        public NetworkMetricsRepository(IConnectionManager connectionManager)
+        public NetworkMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
         {
             _connectionManager = connectionManager;
+            _mapper = mapper;
         }
 
-        public IList<NetworkMetricModel> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public IList<NetworkMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM NetworkMetrics WHERE time >= @fromTime AND time <= @toTime";
-
-            cmd.Parameters.AddWithValue("@fromTime", fromTime.ToUnixTimeSeconds());
-            cmd.Parameters.AddWithValue("@toTime", toTime.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            var retirnList = new List<NetworkMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                while (reader.Read())
+                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics WHERE time >= @fromTime AND time <= @toTime",
+                new
                 {
-                    retirnList.Add(new NetworkMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-
-            return retirnList;
+                    fromTime = fromTime.ToUnixTimeMilliseconds(),
+                    toTime = toTime.ToUnixTimeMilliseconds()
+                }).ToList();
+                return _mapper.Map<List<NetworkMetricDto>>(result);
+            };
         }
 
-        public IList<NetworkMetricModel> GetAll()
+        public IList<NetworkMetricDto> GetAll()
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "SELECT * FROM NetworkMetrics";
-
-            var returnList = new List<NetworkMetricModel>();
-
-            using (SQLiteDataReader reader = cmd.ExecuteReader())
+            using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                while (reader.Read())
-                {
-                    returnList.Add(new NetworkMetricModel
-                    {
-                        Id = reader.GetInt32(0),
-                        Value = reader.GetInt32(1),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt32(2))
-                    });
-                }
-            }
-            return returnList;
+                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics").ToList();
+                return _mapper.Map<List<NetworkMetricDto>>(result);
+            };
         }
 
-        public void Create(NetworkMetricModel item)
+        public void Create(NetworkMetricDto item)
         {
-            using var connection = _connectionManager.CreateOpenedConnection();
-            using var cmd = new SQLiteCommand(connection);
-
-            cmd.CommandText = "INSERT INTO NetworkMetrics(value, time) VALUES(@value, @time)";
-
-            cmd.Parameters.AddWithValue("@value", item.Value);
-            cmd.Parameters.AddWithValue("@time", item.Time.ToUnixTimeSeconds());
-            cmd.Prepare();
-
-            cmd.ExecuteNonQuery();
+            using (var connection = _connectionManager.CreateOpenedConnection())
+            {
+                var metrics = _mapper.Map<NetworkMetricDal>(item);
+                connection.Execute("INSERT INTO NetworkMetrics(value, time) VALUES(@value, @time)",
+                new
+                {
+                    value = metrics.Value,
+                    time = metrics.Time
+                });
+            }
         }
     }
 }

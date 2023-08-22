@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Data.SQLite;
 using MetricsAgent.DAL.Repositories;
 using MetricsAgent.DAL;
+using AutoMapper;
 
 namespace MetricsAgent
 {
@@ -29,6 +30,9 @@ namespace MetricsAgent
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
+            var mapper = mapperConfiguration.CreateMapper();            
+
             services.AddControllers();
             ConfigureSqlLiteConnection(services);
             services.AddTransient<IConnectionManager, ConnectionManager>();
@@ -37,6 +41,7 @@ namespace MetricsAgent
             services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
             services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
             services.AddSingleton<IRomMetricsRepository, RomMetricsRepository>();
+            services.AddSingleton(mapper);
         }
 
         private void ConfigureSqlLiteConnection(IServiceCollection services)
@@ -47,7 +52,7 @@ namespace MetricsAgent
         }
 
         private void PrepareSchema(SQLiteConnection connection)
-        {            
+        {
             using (var command = new SQLiteCommand(connection))
             {
                 command.CommandText = "DROP TABLE IF EXISTS CpuMetrics";
@@ -61,15 +66,15 @@ namespace MetricsAgent
                 command.CommandText = "DROP TABLE IF EXISTS RomMetrics";
                 command.ExecuteNonQuery();
 
-                command.CommandText = @"CREATE TABLE CpuMetrics(id INTEGER PRIMARY KEY, value INT, time INT)";
+                command.CommandText = @"CREATE TABLE CpuMetrics(id INTEGER PRIMARY KEY, value INT, time INTEGER)";
                 command.ExecuteNonQuery();
-                command.CommandText = @"CREATE TABLE DotNetMetrics(id INTEGER PRIMARY KEY, value INT, time INT)";
+                command.CommandText = @"CREATE TABLE DotNetMetrics(id INTEGER PRIMARY KEY, value INT, time INTEGER)";
                 command.ExecuteNonQuery();
-                command.CommandText = @"CREATE TABLE NetworkMetrics(id INTEGER PRIMARY KEY, value INT, time INT)";
+                command.CommandText = @"CREATE TABLE NetworkMetrics(id INTEGER PRIMARY KEY, value INT, time INTEGER)";
                 command.ExecuteNonQuery();
-                command.CommandText = @"CREATE TABLE RamMetrics(id INTEGER PRIMARY KEY, value INT, time INT)";
+                command.CommandText = @"CREATE TABLE RamMetrics(id INTEGER PRIMARY KEY, value INT, time INTEGER)";
                 command.ExecuteNonQuery();
-                command.CommandText = @"CREATE TABLE RomMetrics(id INTEGER PRIMARY KEY, value INT, time INT)";
+                command.CommandText = @"CREATE TABLE RomMetrics(id INTEGER PRIMARY KEY, value INT, time INTEGER)";
                 command.ExecuteNonQuery();
             }
         }

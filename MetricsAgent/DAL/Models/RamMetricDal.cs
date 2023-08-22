@@ -1,6 +1,6 @@
 ﻿namespace MetricsAgent.DAL.Models
 {
-    public class RomMetricModel : BaseMetricModel
+    public class RamMetricDal : BaseMetricDal
     {
     }
 }

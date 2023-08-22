@@ -2,11 +2,10 @@
 
 namespace MetricsAgent.DAL.Models
 {
-    public class BaseMetricModel
+    public class BaseMetricDal
     {
         public int Id { get; set; }
         public int Value { get; set; }
-        public DateTimeOffset Time { get; set; }
-
+        public long Time { get; set; }
     }
 }

@@ -1,8 +1,9 @@
 ﻿using MetricsAgent.DAL.Models;
+using MetricsAgent.DTO;
 
 namespace MetricsAgent.DAL.Interfaces
 {
-    public interface IRomMetricsRepository : IRepository<RomMetricModel>
+    public interface IRomMetricsRepository : IRepository<RomMetricDto>
     {
     }
 }

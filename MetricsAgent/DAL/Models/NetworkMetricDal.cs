@@ -1,6 +1,6 @@
 ﻿namespace MetricsAgent.DAL.Models
 {
-    public class DotNetMetricModel : BaseMetricModel
+    public class NetworkMetricDal : BaseMetricDal
     {
     }
 }
