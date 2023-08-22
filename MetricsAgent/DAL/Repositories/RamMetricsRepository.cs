@@ -28,8 +28,8 @@ namespace MetricsAgent.DAL.Repositories
                 var result = connection.Query<RamMetricDal>("SELECT * FROM RamMetrics WHERE time >= @fromTime AND time <= @toTime",
                 new
                 {
-                    fromTime = fromTime.ToUnixTimeMilliseconds(),
-                    toTime = toTime.ToUnixTimeMilliseconds()
+                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
+                    toTime = UnixTimeConverter.ToUnixTime(toTime)
                 }).ToList();
                 return _mapper.Map<List<RamMetricDto>>(result);
             };

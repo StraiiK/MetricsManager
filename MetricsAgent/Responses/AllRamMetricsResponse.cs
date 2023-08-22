@@ -5,6 +5,6 @@ namespace MetricsAgent.Responses
 {
     public class AllRamMetricsResponse
     {
-        public List<RamMetricDto> Metrics { get; set; }
+        public IList<RamMetricDto> Metrics { get; set; }
     }
 }

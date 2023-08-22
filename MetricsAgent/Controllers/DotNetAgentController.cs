@@ -37,11 +37,9 @@ namespace MetricsAgent.Controllers
         [HttpGet("getall")]
         public IActionResult GetAll()
         {
-            var metrics = _repository.GetAll();
-
             var response = new AllDotNetMetricsResponse()
             {
-                Metrics = _mapper.Map<List<DotNetMetricDto>>(metrics)
+                Metrics = _repository.GetAll()
             };
 
             _logger.LogInformation($"Метод отработал");
@@ -52,11 +50,10 @@ namespace MetricsAgent.Controllers
         public IActionResult GetByPeriod([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
         {
             _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
-            var metrics = _repository.GetByTimePeriod(fromTime, toTime);
 
             var response = new AllDotNetMetricsResponse()
             {
-                Metrics = _mapper.Map<List<DotNetMetricDto>>(metrics)
+                Metrics = _repository.GetByTimePeriod(fromTime, toTime)
             };
 
             _logger.LogInformation("Метод отработал");

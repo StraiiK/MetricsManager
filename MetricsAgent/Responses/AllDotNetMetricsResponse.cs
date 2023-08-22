@@ -5,6 +5,6 @@ namespace MetricsAgent.Responses
 {
     public class AllDotNetMetricsResponse
     {
-        public List<DotNetMetricDto> Metrics { get; set; }
+        public IList<DotNetMetricDto> Metrics { get; set; }
     }
 }
