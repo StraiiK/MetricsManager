@@ -16,7 +16,7 @@ namespace MetricsAgent.DAL.Repositories
         private IMapper _mapper;
 
         public CpuMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
-        {            
+        {
             _connectionManager = connectionManager;
             _mapper = mapper;
         }
@@ -24,8 +24,8 @@ namespace MetricsAgent.DAL.Repositories
         public IList<CpuMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
             using (var connection = _connectionManager.CreateOpenedConnection())
-            {                
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime",
+            {
+                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
                 new
                 {
                     fromTime = UnixTimeConverter.ToUnixTime(fromTime),
@@ -39,7 +39,7 @@ namespace MetricsAgent.DAL.Repositories
         {
             using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics").ToList();
+                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics ORDER BY Id DESC").ToList();
                 return _mapper.Map<List<CpuMetricDto>>(result);
             };
         }

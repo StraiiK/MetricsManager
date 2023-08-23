@@ -6,7 +6,7 @@ using MetricsAgent.Requests;
 using MetricsAgent.Responses;
 using System;
 
-namespace MetricsAgent
+namespace MetricsAgent.Services
 {
     public class MapperProfile : Profile
     {

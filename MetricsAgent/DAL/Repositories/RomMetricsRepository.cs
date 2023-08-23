@@ -25,7 +25,7 @@ namespace MetricsAgent.DAL.Repositories
         {
             using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics WHERE time >= @fromTime AND time <= @toTime",
+                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
                 new
                 {
                     fromTime = UnixTimeConverter.ToUnixTime(fromTime),
@@ -39,7 +39,7 @@ namespace MetricsAgent.DAL.Repositories
         {
             using (var connection = _connectionManager.CreateOpenedConnection())
             {
-                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics").ToList();
+                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics ORDER BY Id DESC").ToList();
                 return _mapper.Map<List<RomMetricDto>>(result);
             };
         }
