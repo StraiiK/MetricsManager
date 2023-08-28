@@ -1,6 +1,11 @@
-﻿using MetricsManager.Requests;
+﻿using AutoMapper;
+using MetricsManager.DAL.Interfaces;
+using MetricsManager.DTO;
+using MetricsManager.Requests;
+using MetricsManager.Responses;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace MetricsManager.Controllers
@@ -9,9 +14,22 @@ namespace MetricsManager.Controllers
     [ApiController]
     public class AgentsController : ControllerBase
     {
+        private readonly ILogger<CpuMetricsController> _logger;
+        private IMapper _mapper;
+        private IAgentRepository _repository;
+
+        public AgentsController(ILogger<CpuMetricsController> logger, IMapper mapper, IAgentRepository repository)
+        {            
+            _logger = logger;
+            _mapper = mapper;
+            _repository = repository;
+        }
+
         [HttpPost("register")]
         public IActionResult RegisterAgent([FromBody] RegisterAgentRequest agentInfo)
         {
+            _logger.LogInformation("Параметры метода:{@agentUrl}", agentInfo.AgentUrl);
+            _repository.Create(_mapper.Map<AgentDto>(agentInfo));
             return Ok();
         }
 
@@ -27,10 +45,16 @@ namespace MetricsManager.Controllers
             return Ok();
         }
 
-        [HttpGet("[action]")]
+        [HttpGet("getall")]
         public IActionResult GetAll()
         {
-            return Ok();
+            var response = new AllAgentsResponse()
+            {
+                Agents = _repository.GetAll()
+            };
+
+            _logger.LogInformation($"Метод отработал");
+            return Ok(response);
         }
     }
 }

@@ -18,15 +18,15 @@ namespace MetricsAgent.Jobs
         public DotNetMetricJob(IDotNetMetricsRepository repository)
         {
             _repository = repository;
-            _DotNetCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            _DotNetCounter = new PerformanceCounter(".NET CLR Memory", "# Bytes in all Heaps", "_Global_");
         }
 
         public Task Execute(IJobExecutionContext context)
         {
-            var DotNetUsageInPrecents = _DotNetCounter.NextValue();
+            var DotNetUsage = _DotNetCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new DotNetMetricDto { Time = time, Value = Convert.ToInt32(DotNetUsageInPrecents) });
+            _repository.Create(new DotNetMetricDto { Time = time, Value = Convert.ToInt32(DotNetUsage) });
 
             return Task.CompletedTask;
         }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using MetricsAgent.DAL.Interfaces;
 
-namespace MetricsAgent.Services
+namespace MetricsAgent.JobsServices
 {
     public class QuartzHostedService : IHostedService
     {

@@ -20,7 +20,7 @@ using MetricsAgent.Jobs;
 using Quartz.Impl;
 using Quartz.Spi;
 using Quartz;
-using MetricsAgent.Services;
+using MetricsAgent.JobsServices;
 
 namespace MetricsAgent
 {
@@ -37,23 +37,22 @@ namespace MetricsAgent
         {
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
-            var connectionmanager = new ConnectionManager();
+            var connectionManager = new ConnectionManager();
 
-            services.AddHostedService<QuartzHostedService>();
+            
             services.AddControllers();
 
-            services.AddSingleton<IConnectionManager>(connectionmanager);
+            services.AddSingleton(mapper);
+            services.AddSingleton<IConnectionManager>(connectionManager);
             services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
             services.AddSingleton<IDotNetMetricsRepository, DotNetMetricsRepository>();
             services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
             services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
             services.AddSingleton<IRomMetricsRepository, RomMetricsRepository>();
-            services.AddSingleton(mapper);
 
-            // ДОбавляем сервисы
+            services.AddHostedService<QuartzHostedService>();
             services.AddSingleton<IJobFactory, SingletonJobFactory>();
             services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-            // добавляем нашу задачу
             services.AddSingleton<CpuMetricJob>();
             services.AddSingleton<DotNetMetricJob>();
             services.AddSingleton<NetworkMetricJob>();
@@ -66,11 +65,11 @@ namespace MetricsAgent
             services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
 
             services.AddFluentMigratorCore()
-            .ConfigureRunner(rb => rb.AddSQLite()
-            .WithGlobalConnectionString(connectionmanager.ConnectionString)
-            .ScanIn(typeof(Startup).Assembly).For.Migrations()
-            ).AddLogging(lb => lb
-            .AddFluentMigratorConsole());
+                .ConfigureRunner(rb => rb.AddSQLite()
+                .WithGlobalConnectionString(connectionManager.ConnectionString)
+                .ScanIn(typeof(Startup).Assembly).For.Migrations()
+                ).AddLogging(lb => lb
+                .AddFluentMigratorConsole());
         }
                 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMigrationRunner runner)

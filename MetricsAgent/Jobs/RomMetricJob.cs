@@ -18,15 +18,15 @@ namespace MetricsAgent.Jobs
         public RomMetricJob(IRomMetricsRepository repository)
         {
             _repository = repository;
-            _RomCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            _RomCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total");
         }
 
         public Task Execute(IJobExecutionContext context)
         {
-            var RomUsageInPrecents = _RomCounter.NextValue();
+            var RomUsage = _RomCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new RomMetricDto { Time = time, Value = Convert.ToInt32(RomUsageInPrecents) });
+            _repository.Create(new RomMetricDto { Time = time, Value = Convert.ToInt32(RomUsage) });
 
             return Task.CompletedTask;
         }

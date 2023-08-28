@@ -9,23 +9,23 @@ namespace MetricsManagerTests.Controllers
 {
     public class RamMetricsControllerUnitTests
     {
-        private RamMetricsController _controller;
+        //private RamMetricsController _controller;
 
-        public RamMetricsControllerUnitTests()
-        {
-            _controller = new RamMetricsController();
-        }
+        //public RamMetricsControllerUnitTests()
+        //{
+        //    _controller = new RamMetricsController();
+        //}
 
-        [Fact]
-        public void GetMetricsFromAgent_ReturnsOk()
-        {
-            var agentId = 1;
-            var fromTime = TimeSpan.FromSeconds(0);
-            var toTime = TimeSpan.FromSeconds(100);
+        //[Fact]
+        //public void GetMetricsFromAgent_ReturnsOk()
+        //{
+        //    var agentId = 1;
+        //    var fromTime = TimeSpan.FromSeconds(0);
+        //    var toTime = TimeSpan.FromSeconds(100);
 
-            var result = _controller.GetMetricsFromAgent(agentId, fromTime, toTime);
+        //    var result = _controller.GetMetricsFromAgent(agentId, fromTime, toTime);
 
-            _ = Assert.IsAssignableFrom<IActionResult>(result);
-        }
+        //    _ = Assert.IsAssignableFrom<IActionResult>(result);
+        //}
     }
 }

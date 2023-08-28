@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using MetricsManager.DAL.Interfaces;
+using MetricsManager.Responses;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Net.Http;
 
 namespace MetricsManager.Controllers
 {
@@ -10,27 +14,55 @@ namespace MetricsManager.Controllers
     public class CpuMetricsController : ControllerBase
     {
         private readonly ILogger<CpuMetricsController> _logger;
+        private ICpuMetricsRepository _repository;
+        private readonly IMapper _mapper;
 
-        public CpuMetricsController(ILogger<CpuMetricsController> logger)
+        public CpuMetricsController(ICpuMetricsRepository repository, ILogger<CpuMetricsController> logger, IMapper mapper)
         {
+            _repository = repository;
             _logger = logger;
-            _logger.LogDebug(1, "NLog встроен в CpuMetricsController");
+            _logger.LogDebug("NLog встроен в CpuMetricsController");
+            _mapper = mapper;
         }
 
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
-        public IActionResult GetMetricsFromAgent([FromRoute] int agentId,
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+        [HttpGet("get/all")]
+        public IActionResult GetAll()
         {
-            _logger.LogInformation($"{fromTime}_{toTime}");
-            return Ok();
+            var response = new AllCpuMetricsApiResponse()
+            {
+                Metrics = _repository.GetAll()
+            };
+
+            _logger.LogInformation($"Метод отработал");
+            return Ok(response);
         }
 
-        [HttpGet("cluster/from/{fromTime}/to/{toTime}")]
-        public IActionResult GetMetricsFromAllCluster([FromRoute] DateTimeOffset fromTime,
-            [FromRoute] TimeSpan toTime)
+        [HttpGet("get/agent")]
+        public IActionResult GetByPeriodFromAgent([FromQuery] int agentId, [FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)        
         {
-            _logger.LogInformation($"{fromTime.ToUnixTimeSeconds()}_{toTime}");
-            return Ok();
+            _logger.LogInformation("Параметры метода:{@agentId_@fromTime}_{@toTime}", agentId, fromTime, toTime);
+
+            var response = new AllCpuMetricsApiResponse()
+            {
+                Metrics = _repository.GetByPeriodFromAgent(agentId, fromTime, toTime)
+            };
+
+            _logger.LogInformation("Метод отработал");
+            return Ok(response);
+        }
+
+        [HttpGet("get/cluster")]
+        public IActionResult GetByPeriodFromAllCluster([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
+        {
+            _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
+
+            var response = new AllCpuMetricsApiResponse()
+            {
+                Metrics = _repository.GetByPeriodFromAllCluster(fromTime, toTime)
+            };
+
+            _logger.LogInformation("Метод отработал");
+            return Ok(response);
         }
     }
 }
