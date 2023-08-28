@@ -21,6 +21,7 @@ using Quartz.Impl;
 using Quartz.Spi;
 using Quartz;
 using MetricsAgent.JobsFeatures;
+using Microsoft.OpenApi.Models;
 
 namespace MetricsAgent
 {
@@ -38,10 +39,10 @@ namespace MetricsAgent
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
-
-            
+                        
             services.AddControllers();
 
+            services.AddSingleton(mapper);
             services.AddSingleton(mapper);
             services.AddSingleton<IConnectionManager>(connectionManager);
             services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
@@ -70,11 +71,39 @@ namespace MetricsAgent
                 .ScanIn(typeof(Startup).Assembly).For.Migrations()
                 ).AddLogging(lb => lb
                 .AddFluentMigratorConsole());
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "API сервиса агента сбора метрик",
+                    Description = "Здесь можно поиграть с api нашего сервиса",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Straik",
+                        Email = string.Empty,
+                        Url = new Uri("https://kremlin.ru"),
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "Можно указать, под какой лицензией всё опубликовано",
+                        Url = new Uri("https://example.com/license"),
+                    }
+                });
+            });
         }
                 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMigrationRunner runner)
         {
             runner.MigrateUp();
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API сервиса агента сбора метрик");
+            });
 
             if (env.IsDevelopment())
             {

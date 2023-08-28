@@ -23,6 +23,7 @@ using MetricsManager.DAL.Repositories;
 using MetricsManager.Client;
 using System.Text.Json;
 using Polly;
+using Microsoft.OpenApi.Models;
 
 namespace MetricsManager
 {
@@ -42,6 +43,7 @@ namespace MetricsManager
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
 
+            services.AddSwaggerGen();
             services.AddControllers();
             services.AddHttpClient<IMetricsAgentClient, MetricsAgentClient>().AddTransientHttpErrorPolicy(p =>
                 p.WaitAndRetryAsync(3, _ => TimeSpan.FromMilliseconds(1000)));
@@ -80,12 +82,41 @@ namespace MetricsManager
                 .ScanIn(typeof(Startup).Assembly).For.Migrations()
                 ).AddLogging(lb => lb
                 .AddFluentMigratorConsole());
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "API сервиса агента сбора метрик",
+                    Description = "Здесь можно поиграть с api нашего сервиса",
+                    TermsOfService = new Uri("https://example.com/terms"),
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Straik",
+                        Email = string.Empty,
+                        Url = new Uri("https://kremlin.ru"),
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "Можно указать, под какой лицензией всё опубликовано",
+                        Url = new Uri("https://example.com/license"),
+                    }
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMigrationRunner runner)
         {
             runner.MigrateUp();
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API сервиса агента сбора метрик");
+            });
+
 
             if (env.IsDevelopment())
             {
