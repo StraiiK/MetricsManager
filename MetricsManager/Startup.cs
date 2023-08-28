@@ -18,7 +18,7 @@ using Quartz.Impl;
 using Quartz.Spi;
 using Quartz;
 using MetricsManager.Jobs;
-using MetricsManager.JobsServices;
+using MetricsManager.JobsFeatures;
 using MetricsManager.DAL.Repositories;
 using MetricsManager.Client;
 using System.Text.Json;

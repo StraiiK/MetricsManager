@@ -20,7 +20,7 @@ using MetricsAgent.Jobs;
 using Quartz.Impl;
 using Quartz.Spi;
 using Quartz;
-using MetricsAgent.JobsServices;
+using MetricsAgent.JobsFeatures;
 
 namespace MetricsAgent
 {
