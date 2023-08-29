@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace MetricsManagerClient
+namespace MetricsManagerUi
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
