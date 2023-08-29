@@ -7,15 +7,15 @@ using Quartz;
 using System;
 using System.Threading.Tasks;
 
-namespace MetricsManager.Jobs
+namespace MetricsManager.Schedule.Jobs
 {
-    public class RamMetricJob : IJob
+    public class NetworkMetricJob : IJob
     {
-        private IRamMetricsRepository _repository;
+        private INetworkMetricsRepository _repository;
         private IMetricsAgentClient _agentClient;
         private IAgentRepository _agentRepository;
 
-        public RamMetricJob(IRamMetricsRepository repository, IMetricsAgentClient agentClient, IAgentRepository agentRepository)
+        public NetworkMetricJob(INetworkMetricsRepository repository, IMetricsAgentClient agentClient, IAgentRepository agentRepository)
         {
             _repository = repository;
             _agentClient = agentClient;
@@ -30,14 +30,14 @@ namespace MetricsManager.Jobs
                 var fromTime = _repository.GetLastOfTime(agent.AgentId);
                 var toTime = DateTimeOffset.UtcNow;
 
-                var request = new GetAllRamMetricsApiRequest()
+                var request = new GetAllNetworkMetricsApiRequest()
                 {
                     AgentAddress = agent.AgentUrl,
                     FromTime = fromTime,
                     ToTime = toTime
                 };
 
-                var responseClient = _agentClient.GetRamMetrics(request);
+                var responseClient = _agentClient.GetNetworkMetrics(request);
                 if (responseClient == null)
                 {
                     return null;
@@ -47,7 +47,7 @@ namespace MetricsManager.Jobs
                 {
                     metrics.AgentId = agent.AgentId;
                     _repository.Create(metrics);
-                }                                              
+                }
             }
             return Task.CompletedTask;
         }

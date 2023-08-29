@@ -16,12 +16,12 @@ using MetricsAgent.DAL.Repositories;
 using MetricsAgent.DAL;
 using AutoMapper;
 using FluentMigrator.Runner;
-using MetricsAgent.Jobs;
 using Quartz.Impl;
 using Quartz.Spi;
 using Quartz;
-using MetricsAgent.JobsFeatures;
 using Microsoft.OpenApi.Models;
+using MetricsAgent.Schedule;
+using MetricsAgent.Schedule.Jobs;
 
 namespace MetricsAgent
 {

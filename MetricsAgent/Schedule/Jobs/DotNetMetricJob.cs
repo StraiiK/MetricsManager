@@ -8,7 +8,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics;
 
-namespace MetricsAgent.Jobs
+namespace MetricsAgent.Schedule.Jobs
 {
     public class DotNetMetricJob : IJob
     {

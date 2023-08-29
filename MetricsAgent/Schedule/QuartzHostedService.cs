@@ -4,9 +4,9 @@ using Quartz;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
-using MetricsManager.DAL.Interfaces;
+using MetricsAgent.DAL.Interfaces;
 
-namespace MetricsManager.JobsFeatures
+namespace MetricsAgent.Schedule
 {
     public class QuartzHostedService : IHostedService
     {

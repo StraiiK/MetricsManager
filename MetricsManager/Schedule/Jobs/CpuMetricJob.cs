@@ -7,7 +7,7 @@ using Quartz;
 using System;
 using System.Threading.Tasks;
 
-namespace MetricsManager.Jobs
+namespace MetricsManager.Schedule.Jobs
 {
     public class CpuMetricJob : IJob
     {
@@ -47,7 +47,7 @@ namespace MetricsManager.Jobs
                 {
                     metrics.AgentId = agent.AgentId;
                     _repository.Create(metrics);
-                }                                              
+                }
             }
             return Task.CompletedTask;
         }
