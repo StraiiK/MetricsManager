@@ -44,7 +44,8 @@ d:DesignHeight="450" d:DesignWidth="800">
                             <Setter Property="IsEnabled" Value="False"></Setter>
                             <Setter Property="Step" Value="1"></Setter>
                         </Trigger>
-                    </Style.Triggers>                </Style>
+                    </Style.Triggers>
+                </Style>
             </Grid.Resources>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"></RowDefinition>
@@ -86,4 +87,4 @@ d:DesignHeight="450" d:DesignWidth="800">
             </StackPanel>
         </Grid>
     </Grid>
-</UserControl>
+</UserControl>

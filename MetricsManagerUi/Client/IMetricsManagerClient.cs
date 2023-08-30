@@ -3,7 +3,7 @@ using MetricsManagerUi.Responses;
 
 namespace MetricsManagerUi.Client
 {
-    public interface IMetricsAgentClient
+    public interface IMetricsManagerClient
     {
         AllCpuMetricsApiResponse GetCpuMetrics(GetAllCpuMetricsApiRequest request);
         //AllDotNetMetricsApiResponse GetDotNetMetrics(GetAllDotNetMetricsApiRequest request);

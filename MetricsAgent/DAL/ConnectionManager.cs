@@ -9,7 +9,7 @@ namespace MetricsAgent.DAL
     {
         private string ProjectFolder => Path.GetRelativePath(Environment.CurrentDirectory, AppDomain.CurrentDomain.BaseDirectory);
         private string PathToDb => Path.Combine(ProjectFolder, "metrics.db");
-        public string ConnectionString => $"Data Source={PathToDb};Version=3;Pooling=true;Max Pool Size=100;";
+        public string ConnectionString => $"Data Source={PathToDb};";
         
         public SQLiteConnection CreateOpenedConnection()
         {

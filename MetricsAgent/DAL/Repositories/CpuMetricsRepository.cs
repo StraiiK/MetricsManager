@@ -3,6 +3,7 @@ using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,50 +15,39 @@ namespace MetricsAgent.DAL.Repositories
     {
         private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricDbContext _dbContext;
 
-        public CpuMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public CpuMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
         {
             _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
         public IList<CpuMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<CpuMetricDto>>(result);
-            };
+            var result = _dbContext.CpuMetrics
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<CpuMetricDto>>(result);
         }
 
         public IList<CpuMetricDto> GetAll()
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<CpuMetricDto>>(result);
-            };
+            var result = _dbContext.CpuMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<CpuMetricDto>>(result);
         }
 
         public void Create(CpuMetricDto item)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<CpuMetricDal>(item);
-                connection.Execute("INSERT INTO CpuMetrics(value, time) VALUES(@value, @time)",
-                new
-                {
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            _dbContext.CpuMetrics.Add(_mapper.Map<CpuMetricDal>(item));
+            _dbContext.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }
-
-

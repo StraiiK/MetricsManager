@@ -22,6 +22,8 @@ using Quartz;
 using Microsoft.OpenApi.Models;
 using MetricsAgent.Schedule;
 using MetricsAgent.Schedule.Jobs;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Writers;
 
 namespace MetricsAgent
 {
@@ -39,17 +41,24 @@ namespace MetricsAgent
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
-                        
+            using (var context = new MetricDbContext(connectionManager)) 
+            {
+                context.Database.EnsureCreated(); // Создание базы данных, если она ещё не существует
+                context.SaveChanges();
+            }
+
             services.AddControllers();
 
-            services.AddSingleton(mapper);
+            services.AddDbContext<MetricDbContext>();
+            services.AddTransient<MetricDbContext>();
+
             services.AddSingleton(mapper);
             services.AddSingleton<IConnectionManager>(connectionManager);
-            services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
-            services.AddSingleton<IDotNetMetricsRepository, DotNetMetricsRepository>();
-            services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
-            services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
-            services.AddSingleton<IRomMetricsRepository, RomMetricsRepository>();
+            services.AddTransient<ICpuMetricsRepository, CpuMetricsRepository>();
+            services.AddTransient<IDotNetMetricsRepository, DotNetMetricsRepository>();
+            services.AddTransient<INetworkMetricsRepository, NetworkMetricsRepository>();
+            services.AddTransient<IRamMetricsRepository, RamMetricsRepository>();
+            services.AddTransient<IRomMetricsRepository, RomMetricsRepository>();
 
             services.AddHostedService<QuartzHostedService>();
             services.AddSingleton<IJobFactory, SingletonJobFactory>();
@@ -61,16 +70,16 @@ namespace MetricsAgent
             services.AddSingleton<RomMetricJob>();
             services.AddSingleton(new JobSchedule(jobType: typeof(CpuMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(DotNetMetricJob), cronExpression: "0/5 * * * * ?"));
-            services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
-            services.AddSingleton(new JobSchedule(jobType: typeof(RamMetricJob), cronExpression: "0/5 * * * * ?"));
-            services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
+            //services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
+            //services.AddSingleton(new JobSchedule(jobType: typeof(RamMetricJob), cronExpression: "0/5 * * * * ?"));
+            //services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
 
-            services.AddFluentMigratorCore()
-                .ConfigureRunner(rb => rb.AddSQLite()
-                .WithGlobalConnectionString(connectionManager.ConnectionString)
-                .ScanIn(typeof(Startup).Assembly).For.Migrations()
-                ).AddLogging(lb => lb
-                .AddFluentMigratorConsole());
+            //services.AddFluentMigratorCore()
+            //    .ConfigureRunner(rb => rb.AddSQLite()
+            //    .WithGlobalConnectionString(connectionManager.ConnectionString)
+            //    .ScanIn(typeof(Startup).Assembly).For.Migrations()
+            //    ).AddLogging(lb => lb
+            //    .AddFluentMigratorConsole());
 
             services.AddSwaggerGen(c =>
             {
@@ -95,9 +104,9 @@ namespace MetricsAgent
             });
         }
                 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMigrationRunner runner)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            runner.MigrateUp();
+            //runner.MigrateUp();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>

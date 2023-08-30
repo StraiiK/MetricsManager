@@ -7,13 +7,13 @@ using Microsoft.Extensions.Logging;
 
 namespace MetricsManagerUi.Client
 {
-    public class MetricsAgentClient : IMetricsAgentClient
+    public class MetricsManagerClient : IMetricsManagerClient
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<MetricsAgentClient> _logger;
+        private readonly ILogger<MetricsManagerClient> _logger;
         private readonly JsonSerializerOptions _options;
 
-        public MetricsAgentClient(HttpClient httpClient, ILogger<MetricsAgentClient> logger, JsonSerializerOptions options)
+        public MetricsManagerClient(HttpClient httpClient, ILogger<MetricsManagerClient> logger, JsonSerializerOptions options)
         {
             _httpClient = httpClient;
             _logger = logger;
