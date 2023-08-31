@@ -13,13 +13,11 @@ namespace MetricsAgent.DAL.Repositories
 {
     public class DotNetMetricsRepository : IDotNetMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
         private MetricDbContext _dbContext;
 
-        public DotNetMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
+        public DotNetMetricsRepository(IMapper mapper, MetricDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
             _dbContext = dbContext;
         }

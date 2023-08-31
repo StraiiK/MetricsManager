@@ -13,13 +13,11 @@ namespace MetricsAgent.DAL.Repositories
 {
     public class NetworkMetricsRepository : INetworkMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
         private MetricDbContext _dbContext;
 
-        public NetworkMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
+        public NetworkMetricsRepository(IMapper mapper, MetricDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
             _dbContext = dbContext;
         }

@@ -13,13 +13,11 @@ namespace MetricsAgent.DAL.Repositories
 {
     public class RamMetricsRepository : IRamMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
         private MetricDbContext _dbContext;
 
-        public RamMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
+        public RamMetricsRepository(IMapper mapper, MetricDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
             _dbContext = dbContext;
         }

@@ -42,12 +42,6 @@ namespace MetricsAgent
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
 
-            //using (var context = new MetricDbContext(connectionManager)) 
-            //{
-            //    context.Database.EnsureCreated(); // Создание базы данных, если она ещё не существует
-            //    context.SaveChanges();
-            //}
-
             services.AddControllers();
 
             services.AddDbContext<MetricDbContext>();
@@ -75,13 +69,6 @@ namespace MetricsAgent
             services.AddSingleton(new JobSchedule(jobType: typeof(RamMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
 
-            //services.AddFluentMigratorCore()
-            //    .ConfigureRunner(rb => rb.AddSQLite()
-            //    .WithGlobalConnectionString(connectionManager.ConnectionString)
-            //    .ScanIn(typeof(Startup).Assembly).For.Migrations()
-            //    ).AddLogging(lb => lb
-            //    .AddFluentMigratorConsole());
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -107,8 +94,6 @@ namespace MetricsAgent
                 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            //runner.MigrateUp();
-
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {

@@ -13,13 +13,11 @@ namespace MetricsAgent.DAL.Repositories
 {
     public class RomMetricsRepository : IRomMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
         private MetricDbContext _dbContext;
 
-        public RomMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
+        public RomMetricsRepository(IMapper mapper, MetricDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
             _dbContext = dbContext;
         }
