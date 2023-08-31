@@ -42,11 +42,11 @@ namespace MetricsAgent
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
 
-            using (var context = new MetricDbContext(connectionManager)) 
-            {
-                context.Database.EnsureCreated(); // Создание базы данных, если она ещё не существует
-                context.SaveChanges();
-            }
+            //using (var context = new MetricDbContext(connectionManager)) 
+            //{
+            //    context.Database.EnsureCreated(); // Создание базы данных, если она ещё не существует
+            //    context.SaveChanges();
+            //}
 
             services.AddControllers();
 
