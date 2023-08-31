@@ -42,6 +42,12 @@ namespace MetricsAgent
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
 
+            using (var context = new MetricDbContext(connectionManager))
+            {
+                context.Database.Migrate();
+                context.SaveChanges();                
+            }
+
             services.AddControllers();
 
             services.AddDbContext<MetricDbContext>();
