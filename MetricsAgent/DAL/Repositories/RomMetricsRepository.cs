@@ -1,11 +1,12 @@
-﻿using MetricsAgent.DAL.Interfaces;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System;
-using MetricsAgent.DAL.Models;
-using AutoMapper;
+﻿using AutoMapper;
 using Dapper;
+using MetricsAgent.DAL.Interfaces;
+using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace MetricsAgent.DAL.Repositories
@@ -14,48 +15,39 @@ namespace MetricsAgent.DAL.Repositories
     {
         private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricDbContext _dbContext;
 
-        public RomMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public RomMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
         {
             _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
         public IList<RomMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<RomMetricDto>>(result);
-            };
+            var result = _dbContext.RomMetrics
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<RomMetricDto>>(result);
         }
 
         public IList<RomMetricDto> GetAll()
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<RomMetricDal>("SELECT * FROM RomMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<RomMetricDto>>(result);
-            };
+            var result = _dbContext.RomMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<RomMetricDto>>(result);
         }
 
         public void Create(RomMetricDto item)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<RomMetricDal>(item);
-                connection.Execute("INSERT INTO RomMetrics(value, time) VALUES(@value, @time)",
-                new
-                {
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            _dbContext.RomMetrics.Add(_mapper.Map<RomMetricDal>(item));
+            _dbContext.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

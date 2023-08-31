@@ -13,6 +13,9 @@ namespace MetricsAgent.DAL
         private readonly IConnectionManager _connectionManager;
         public DbSet<CpuMetricDal> CpuMetrics { get; set; }
         public DbSet<DotNetMetricDal> DotNetMetrics { get; set; }
+        public DbSet<NetworkMetricDal> NetworkMetrics { get; set; }
+        public DbSet<RamMetricDal> RamMetrics { get; set; }
+        public DbSet<RomMetricDal> RomMetrics { get; set; }
 
         public MetricDbContext(IConnectionManager connectionManager)
         {

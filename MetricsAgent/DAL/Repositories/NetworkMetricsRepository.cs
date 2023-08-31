@@ -1,11 +1,12 @@
-﻿using MetricsAgent.DAL.Interfaces;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System;
-using MetricsAgent.DAL.Models;
-using AutoMapper;
+﻿using AutoMapper;
 using Dapper;
+using MetricsAgent.DAL.Interfaces;
+using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace MetricsAgent.DAL.Repositories
@@ -14,48 +15,39 @@ namespace MetricsAgent.DAL.Repositories
     {
         private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricDbContext _dbContext;
 
-        public NetworkMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public NetworkMetricsRepository(IConnectionManager connectionManager, IMapper mapper, MetricDbContext dbContext)
         {
             _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
         public IList<NetworkMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<NetworkMetricDto>>(result);
-            };
+            var result = _dbContext.NetworkMetrics
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<NetworkMetricDto>>(result);
         }
 
         public IList<NetworkMetricDto> GetAll()
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<NetworkMetricDto>>(result);
-            };
+            var result = _dbContext.NetworkMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
+            return _mapper.Map<List<NetworkMetricDto>>(result);
         }
 
         public void Create(NetworkMetricDto item)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<NetworkMetricDal>(item);
-                connection.Execute("INSERT INTO NetworkMetrics(value, time) VALUES(@value, @time)",
-                new
-                {
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            _dbContext.NetworkMetrics.Add(_mapper.Map<NetworkMetricDal>(item));
+            _dbContext.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

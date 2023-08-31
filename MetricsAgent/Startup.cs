@@ -41,6 +41,7 @@ namespace MetricsAgent
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
+
             using (var context = new MetricDbContext(connectionManager)) 
             {
                 context.Database.EnsureCreated(); // Создание базы данных, если она ещё не существует
@@ -70,9 +71,9 @@ namespace MetricsAgent
             services.AddSingleton<RomMetricJob>();
             services.AddSingleton(new JobSchedule(jobType: typeof(CpuMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(DotNetMetricJob), cronExpression: "0/5 * * * * ?"));
-            //services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
-            //services.AddSingleton(new JobSchedule(jobType: typeof(RamMetricJob), cronExpression: "0/5 * * * * ?"));
-            //services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
+            services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
+            services.AddSingleton(new JobSchedule(jobType: typeof(RamMetricJob), cronExpression: "0/5 * * * * ?"));
+            services.AddSingleton(new JobSchedule(jobType: typeof(RomMetricJob), cronExpression: "0/5 * * * * ?"));
 
             //services.AddFluentMigratorCore()
             //    .ConfigureRunner(rb => rb.AddSQLite()
