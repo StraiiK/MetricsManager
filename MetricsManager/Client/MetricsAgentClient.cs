@@ -5,6 +5,7 @@ using System;
 using MetricsManager.Responses;
 using MetricsManager.Requests;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace MetricsManager.Client
 {
@@ -21,7 +22,7 @@ namespace MetricsManager.Client
             _options = options;
         }
 
-        public AllCpuMetricsApiResponse GetCpuMetrics(GetAllCpuMetricsApiRequest request)
+        public async Task <AllCpuMetricsApiResponse> GetCpuMetrics(GetAllCpuMetricsApiRequest request)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -30,9 +31,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = _httpClient.SendAsync(httpRequest).Result;
-                using var responseStream = response.Content.ReadAsStreamAsync().Result;
-                var result = JsonSerializer.DeserializeAsync<AllCpuMetricsApiResponse>(responseStream, _options).Result;
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = await JsonSerializer.DeserializeAsync<AllCpuMetricsApiResponse>(responseStream, _options);
                 return result;
             }
             catch (Exception ex)

@@ -45,7 +45,7 @@ namespace MetricsAgent
             using (var context = new MetricDbContext(connectionManager))
             {
                 context.Database.Migrate();
-                context.SaveChanges();                
+                context.SaveChanges();
             }
 
             services.AddControllers();
@@ -64,11 +64,11 @@ namespace MetricsAgent
             services.AddHostedService<QuartzHostedService>();
             services.AddSingleton<IJobFactory, SingletonJobFactory>();
             services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-            services.AddSingleton<CpuMetricJob>();
-            services.AddSingleton<DotNetMetricJob>();
-            services.AddSingleton<NetworkMetricJob>();
-            services.AddSingleton<RamMetricJob>();
-            services.AddSingleton<RomMetricJob>();
+            services.AddTransient<CpuMetricJob>();
+            services.AddTransient<DotNetMetricJob>();
+            services.AddTransient<NetworkMetricJob>();
+            services.AddTransient<RamMetricJob>();
+            services.AddTransient<RomMetricJob>();
             services.AddSingleton(new JobSchedule(jobType: typeof(CpuMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(DotNetMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
