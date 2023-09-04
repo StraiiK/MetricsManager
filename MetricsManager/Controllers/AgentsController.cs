@@ -16,11 +16,11 @@ namespace MetricsManager.Controllers
     [ApiController]
     public class AgentsController : ControllerBase
     {
-        private readonly ILogger<CpuMetricsController> _logger;
+        private readonly ILogger<AgentsController> _logger;
         private IMapper _mapper;
         private IAgentRepository _repository;
 
-        public AgentsController(ILogger<CpuMetricsController> logger, IMapper mapper, IAgentRepository repository)
+        public AgentsController(ILogger<AgentsController> logger, IMapper mapper, IAgentRepository repository)
         {            
             _logger = logger;
             _mapper = mapper;

@@ -26,10 +26,4 @@
     <ProjectReference Include="..\MetricsManager\MetricsManager.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DAL\" />
-    <Folder Include="Requests\" />
-    <Folder Include="Responses\" />
-  </ItemGroup>
-
 </Project>
