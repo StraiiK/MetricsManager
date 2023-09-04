@@ -16,23 +16,23 @@ namespace MetricsAgentTests.Controllers
 {
     public class CpuAgentControllerUnitTests
     {
-        private Mock<ICpuMetricsRepository> _mock;
+        private Mock<ICpuMetricsRepository> _mockRepo;
         private Mock<ILogger<CpuAgentController>> _mockLog;
         private CpuAgentController _controller;
-        private Mock<IMapper> _mapper;
+        private Mock<IMapper> _mockMapper;
 
         public CpuAgentControllerUnitTests()
         {
-            _mock = new Mock<ICpuMetricsRepository>();
+            _mockRepo = new Mock<ICpuMetricsRepository>();
             _mockLog = new Mock<ILogger<CpuAgentController>>();
-            _mapper = new Mock<IMapper>();
-            _controller = new CpuAgentController(_mock.Object, _mockLog.Object, _mapper.Object);
+            _mockMapper = new Mock<IMapper>();
+            _controller = new CpuAgentController(_mockRepo.Object, _mockLog.Object, _mockMapper.Object);
         }
 
         [Fact]
         public async Task Create_ShouldCall_Create_From_Repository()
         {
-            _mock.Setup(repository => repository.CreateAsync(It.IsAny<CpuMetricDto>(), It.IsAny<CancellationToken>())).Verifiable();
+            _mockRepo.Setup(repository => repository.CreateAsync(It.IsAny<CpuMetricDto>(), It.IsAny<CancellationToken>())).Verifiable();
 
             await _controller.CreateAsync(new CpuMetricCreateRequest
             {
@@ -40,27 +40,30 @@ namespace MetricsAgentTests.Controllers
                 Value = 50
             });
 
-            _mock.Verify(repository => repository.CreateAsync(It.IsAny<CpuMetricDto>(), It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repository => repository.CreateAsync(It.IsAny<CpuMetricDto>(), It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repository => repository.CreateAsync(It.IsAny<CpuMetricDto>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce());
         }
 
         [Fact]
         public async Task GetByPeriodFromAgent_ReturnsOk()
         {
-            _mock.Setup(repo => repo.GetByTimePeriodAsync(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult<IList<CpuMetricDto>>(new List<CpuMetricDto>()));
+            _mockRepo.Setup(repo => repo.GetByTimePeriodAsync(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).Returns(Task.FromResult<IList<CpuMetricDto>>(new List<CpuMetricDto>()));
 
             var result = await _controller.GetByPeriodAsync(DateTimeOffset.FromFileTime(1), DateTimeOffset.FromFileTime(100));
 
-            _mock.Verify(repo => repo.GetByTimePeriodAsync(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repo => repo.GetByTimePeriodAsync(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repo => repo.GetByTimePeriodAsync(It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce());
         }
 
         [Fact]
         public async Task GetAllFromAgent_ReturnsOk()
         {
-            _mock.Setup(repo => repo.GetAllAsync(It.IsAny<CancellationToken>())).Returns(Task.FromResult<IList<CpuMetricDto>>(new List<CpuMetricDto>()));
+            _mockRepo.Setup(repo => repo.GetAllAsync(It.IsAny<CancellationToken>())).Returns(Task.FromResult<IList<CpuMetricDto>>(new List<CpuMetricDto>()));
 
             var result = await _controller.GetAllAsync();
 
-            _mock.Verify(repo => repo.GetAllAsync(It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repo => repo.GetAllAsync(It.IsAny<CancellationToken>()), Times.AtMostOnce());
+            _mockRepo.Verify(repo => repo.GetAllAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce());
         }
     }
 }
