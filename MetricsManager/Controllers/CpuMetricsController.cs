@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.Controllers
 {
@@ -26,11 +28,11 @@ namespace MetricsManager.Controllers
         }
 
         [HttpGet("get/all")]
-        public IActionResult GetAll()
+        public async Task <IActionResult> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var response = new AllCpuMetricsApiResponse()
             {
-                Metrics = _repository.GetAll()
+                Metrics = await _repository.GetAllAsync(cancellationToken)
             };
 
             _logger.LogInformation($"Метод отработал");
@@ -38,13 +40,13 @@ namespace MetricsManager.Controllers
         }
 
         [HttpGet("get/agent")]
-        public IActionResult GetByPeriodFromAgent([FromQuery] int agentId, [FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)        
+        public async Task<IActionResult> GetByPeriodFromAgentAsync([FromQuery] int agentId, [FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime, CancellationToken cancellationToken = default)        
         {
             _logger.LogInformation("Параметры метода:{@agentId_@fromTime}_{@toTime}", agentId, fromTime, toTime);
 
             var response = new AllCpuMetricsApiResponse()
             {
-                Metrics = _repository.GetByPeriodFromAgent(agentId, fromTime, toTime)
+                Metrics = await _repository.GetByPeriodFromAgentAsync(agentId, fromTime, toTime, cancellationToken)
             };
 
             _logger.LogInformation("Метод отработал");
@@ -52,13 +54,13 @@ namespace MetricsManager.Controllers
         }
 
         [HttpGet("get/cluster")]
-        public IActionResult GetByPeriodFromAllCluster([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
+        public async Task<IActionResult> GetByPeriodFromAllClusterAsync([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
 
             var response = new AllCpuMetricsApiResponse()
             {
-                Metrics = _repository.GetByPeriodFromAllCluster(fromTime, toTime)
+                Metrics = await _repository.GetByPeriodFromAllClusterAsync(fromTime, toTime, cancellationToken)
             };
 
             _logger.LogInformation("Метод отработал");

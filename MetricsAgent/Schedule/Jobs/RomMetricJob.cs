@@ -13,22 +13,20 @@ namespace MetricsAgent.Schedule.Jobs
     public class RomMetricJob : IJob
     {
         private IRomMetricsRepository _repository;
-        private PerformanceCounter _RomCounter;
+        private PerformanceCounter _romCounter;
 
         public RomMetricJob(IRomMetricsRepository repository)
         {
             _repository = repository;
-            _RomCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total");
+            _romCounter = new PerformanceCounter("PhysicalDisk", "% Disk Time", "_Total");
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            var RomUsage = _RomCounter.NextValue();
+            var romUsageInPrecents = _romCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new RomMetricDto { Time = time, Value = Convert.ToInt32(RomUsage) });
-
-            return Task.CompletedTask;
+            await _repository.CreateAsync(new RomMetricDto { Time = time, Value = Convert.ToInt32(romUsageInPrecents) });
         }
     }
 }

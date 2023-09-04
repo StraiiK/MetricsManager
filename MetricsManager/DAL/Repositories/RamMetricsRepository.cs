@@ -3,89 +3,80 @@ using Dapper;
 using MetricsManager.DAL.Interfaces;
 using MetricsManager.DAL.Models;
 using MetricsManager.DTO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.DAL.Repositories
 {
     public class RamMetricsRepository : IRamMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricsDbContext _dbContext;
 
-        public RamMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public RamMetricsRepository(IMapper mapper, MetricsDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
-        public IList<RamMetricDto> GetByPeriodFromAgent(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<RamMetricDto>> GetByPeriodFromAgentAsync(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<RamMetricDal>("SELECT * FROM RamMetrics WHERE AgentId = @agentId " +
-                    "AND time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    agentId = agentId,
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<RamMetricDto>>(result);
-            };
+            var result = await _dbContext.RamMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime)
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime)
+                && metric.AgentId == agentId)
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<RamMetricDto>>(result);
         }
 
-        public IList<RamMetricDto> GetByPeriodFromAllCluster(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<RamMetricDto>> GetByPeriodFromAllClusterAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<RamMetricDal>("SELECT * FROM RamMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<RamMetricDto>>(result);
-            };
+            var result = await _dbContext.RamMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime)
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<RamMetricDto>>(result);
         }
 
-        public IList<RamMetricDto> GetAll()
+        public async Task<IList<RamMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<RamMetricDal>("SELECT * FROM RamMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<RamMetricDto>>(result);
-            };
+            var result = await _dbContext.RamMetric
+                .AsNoTracking()
+                .OrderByDescending(metric => metric.Id)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<RamMetricDto>>(result);
         }
 
-        public void Create(RamMetricDto item)
+        public async Task CreateAsync(RamMetricDto item, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<RamMetricDal>(item);
-                connection.Execute("INSERT INTO RamMetrics(agentId, value, time) VALUES(@agentId, @value, @time)",
-                new
-                {
-                    agentId = item.AgentId,
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            await _dbContext.RamMetric.AddAsync(_mapper.Map<RamMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public DateTimeOffset GetLastOfTime(int agentId)
+        public async Task<DateTimeOffset> GetLastOfTimeAsync(int agentId, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.QuerySingle<long>("SELECT IFNULL(max(Time), 0) FROM RamMetrics WHERE AgentId = @agentId",
-                new
-                {
-                    agentId = agentId
-                });
-                return UnixTimeConverter.FromUnixTime(result);
-            }
+            var result = await _dbContext.RamMetric
+                .AsNoTracking()
+                .Where(metric => metric.AgentId == agentId)
+                .Select(metric => (long?)metric.Time)
+                .MaxAsync(cancellationToken) ?? 0;
+            return UnixTimeConverter.FromUnixTime(result);
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

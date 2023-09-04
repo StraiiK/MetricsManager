@@ -3,89 +3,80 @@ using Dapper;
 using MetricsManager.DAL.Interfaces;
 using MetricsManager.DAL.Models;
 using MetricsManager.DTO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.DAL.Repositories
 {
     public class NetworkMetricsRepository : INetworkMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricsDbContext _dbContext;
 
-        public NetworkMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public NetworkMetricsRepository(IMapper mapper, MetricsDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
-        public IList<NetworkMetricDto> GetByPeriodFromAgent(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<NetworkMetricDto>> GetByPeriodFromAgentAsync(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics WHERE AgentId = @agentId " +
-                    "AND time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    agentId = agentId,
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<NetworkMetricDto>>(result);
-            };
+            var result = await _dbContext.NetworkMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime)
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime)
+                && metric.AgentId == agentId)
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<NetworkMetricDto>>(result);
         }
 
-        public IList<NetworkMetricDto> GetByPeriodFromAllCluster(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<NetworkMetricDto>> GetByPeriodFromAllClusterAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<NetworkMetricDto>>(result);
-            };
+            var result = await _dbContext.NetworkMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime)
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<NetworkMetricDto>>(result);
         }
 
-        public IList<NetworkMetricDto> GetAll()
+        public async Task<IList<NetworkMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<NetworkMetricDal>("SELECT * FROM NetworkMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<NetworkMetricDto>>(result);
-            };
+            var result = await _dbContext.NetworkMetric
+                .AsNoTracking()
+                .OrderByDescending(metric => metric.Id)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<NetworkMetricDto>>(result);
         }
 
-        public void Create(NetworkMetricDto item)
+        public async Task CreateAsync(NetworkMetricDto item, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<NetworkMetricDal>(item);
-                connection.Execute("INSERT INTO NetworkMetrics(agentId, value, time) VALUES(@agentId, @value, @time)",
-                new
-                {
-                    agentId = item.AgentId,
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            await _dbContext.NetworkMetric.AddAsync(_mapper.Map<NetworkMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public DateTimeOffset GetLastOfTime(int agentId)
+        public async Task<DateTimeOffset> GetLastOfTimeAsync(int agentId, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.QuerySingle<long>("SELECT IFNULL(max(Time), 0) FROM NetworkMetrics WHERE AgentId = @agentId",
-                new
-                {
-                    agentId = agentId
-                });
-                return UnixTimeConverter.FromUnixTime(result);
-            }
+            var result = await _dbContext.NetworkMetric
+                .AsNoTracking()
+                .Where(metric => metric.AgentId == agentId)
+                .Select(metric => (long?)metric.Time)
+                .MaxAsync(cancellationToken) ?? 0;
+            return UnixTimeConverter.FromUnixTime(result);
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

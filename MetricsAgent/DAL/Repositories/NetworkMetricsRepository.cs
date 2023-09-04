@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.DAL.Repositories
 {
@@ -22,25 +23,25 @@ namespace MetricsAgent.DAL.Repositories
             _dbContext = dbContext;
         }
 
-        public IList<NetworkMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<NetworkMetricDto>> GetByTimePeriodAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.NetworkMetrics
+            var result = await _dbContext.NetworkMetrics
                 .AsNoTracking()
                 .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
-                .OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<NetworkMetricDto>>(result);
+                .OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<NetworkMetricDto>>(result);
         }
 
-        public IList<NetworkMetricDto> GetAll()
+        public async Task<IList<NetworkMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.NetworkMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<NetworkMetricDto>>(result);
+            var result = await _dbContext.NetworkMetrics.AsNoTracking().OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<NetworkMetricDto>>(result);
         }
 
-        public void Create(NetworkMetricDto item)
+        public async Task CreateAsync(NetworkMetricDto item, CancellationToken cancellationToken = default)
         {
-            _dbContext.NetworkMetrics.Add(_mapper.Map<NetworkMetricDal>(item));
-            _dbContext.SaveChanges();
+            await _dbContext.NetworkMetrics.AddAsync(_mapper.Map<NetworkMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

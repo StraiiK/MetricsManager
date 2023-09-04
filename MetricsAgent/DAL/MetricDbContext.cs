@@ -1,10 +1,6 @@
-﻿using MetricsAgent.DTO;
-using System.Data.SQLite;
-using Microsoft.EntityFrameworkCore;
-using System.IO;
-using System;
-using MetricsAgent.DAL.Interfaces;
+﻿using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetricsAgent.DAL
 {

@@ -4,6 +4,7 @@ namespace MetricsManager.DAL.Interfaces
 {
     public interface IConnectionManager
     {
-        SQLiteConnection CreateOpenedConnection();
+        string ConnectionString { get; }
+        SQLiteConnection CreateOpenedConnection();        
     }
 }

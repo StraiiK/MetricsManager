@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.DAL.Repositories
 {
@@ -22,25 +23,28 @@ namespace MetricsAgent.DAL.Repositories
             _dbContext = dbContext;
         }
 
-        public IList<CpuMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<CpuMetricDto>> GetByTimePeriodAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.CpuMetrics
+            var result = await _dbContext.CpuMetrics
                 .AsNoTracking()
                 .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
-                .OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<CpuMetricDto>>(result);
+                .OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<CpuMetricDto>>(result);
         }
 
-        public IList<CpuMetricDto> GetAll()
+        public async Task<IList<CpuMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.CpuMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<CpuMetricDto>>(result);
+            var result = await _dbContext.CpuMetrics
+                .AsNoTracking()
+                .OrderByDescending(metric => metric.Id)
+                .ToListAsync();
+            return _mapper.Map<IList<CpuMetricDto>>(result);
         }
 
-        public void Create(CpuMetricDto item)
+        public async Task CreateAsync(CpuMetricDto item, CancellationToken cancellationToken = default)
         {
-            _dbContext.CpuMetrics.Add(_mapper.Map<CpuMetricDal>(item));
-            _dbContext.SaveChanges();
+            await _dbContext.CpuMetrics.AddAsync(_mapper.Map<CpuMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

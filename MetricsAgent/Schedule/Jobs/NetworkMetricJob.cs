@@ -13,22 +13,20 @@ namespace MetricsAgent.Schedule.Jobs
     public class NetworkMetricJob : IJob
     {
         private INetworkMetricsRepository _repository;
-        private PerformanceCounter _NetworkCounter;
+        private PerformanceCounter _networkCounter;
 
         public NetworkMetricJob(INetworkMetricsRepository repository)
         {
             _repository = repository;
-            _NetworkCounter = new PerformanceCounter("Network Interface", "Bytes Sent/sec", new PerformanceCounterCategory("Network Interface").GetInstanceNames()[0]);
+            _networkCounter = new PerformanceCounter("Network Interface", "Bytes Sent/sec", new PerformanceCounterCategory("Network Interface").GetInstanceNames()[0]);
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            var NetworkUsage = _NetworkCounter.NextValue();
+            var networkUsageInPrecents = _networkCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new NetworkMetricDto { Time = time, Value = Convert.ToInt32(NetworkUsage) });
-
-            return Task.CompletedTask;
+            await _repository.CreateAsync(new NetworkMetricDto { Time = time, Value = Convert.ToInt32(networkUsageInPrecents) });
         }
     }
 }

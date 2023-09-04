@@ -13,22 +13,20 @@ namespace MetricsAgent.Schedule.Jobs
     public class DotNetMetricJob : IJob
     {
         private IDotNetMetricsRepository _repository;
-        private PerformanceCounter _DotNetCounter;
+        private PerformanceCounter _dotNetCounter;
 
         public DotNetMetricJob(IDotNetMetricsRepository repository)
         {
             _repository = repository;
-            _DotNetCounter = new PerformanceCounter(".NET CLR Memory", "# Bytes in all Heaps", "_Global_");
+            _dotNetCounter = new PerformanceCounter(".NET CLR Memory", "# Bytes in all Heaps", "_Global_");
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            var DotNetUsage = _DotNetCounter.NextValue();
+            var dotNetUsageInPrecents = _dotNetCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new DotNetMetricDto { Time = time, Value = Convert.ToInt32(DotNetUsage) });
-
-            return Task.CompletedTask;
+            await _repository.CreateAsync(new DotNetMetricDto {Time = time, Value = Convert.ToInt32(dotNetUsageInPrecents)});                       
         }
     }
 }

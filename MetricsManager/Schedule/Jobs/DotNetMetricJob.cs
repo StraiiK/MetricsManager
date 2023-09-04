@@ -22,12 +22,12 @@ namespace MetricsManager.Schedule.Jobs
             _agentRepository = agentRepository;
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            var AgentAddress = _agentRepository.GetAll();
+            var AgentAddress = await _agentRepository.GetAllAsync();
             foreach (var agent in AgentAddress)
             {
-                var fromTime = _repository.GetLastOfTime(agent.AgentId);
+                var fromTime = await _repository.GetLastOfTimeAsync(agent.AgentId);
                 var toTime = DateTimeOffset.UtcNow;
 
                 var request = new GetAllDotNetMetricsApiRequest()
@@ -37,19 +37,19 @@ namespace MetricsManager.Schedule.Jobs
                     ToTime = toTime
                 };
 
-                var responseClient = _agentClient.GetDotNetMetrics(request);
+                var responseClient = await _agentClient.GetDotNetMetricsAsync(request);
                 if (responseClient == null)
                 {
-                    return null;
+                    return;
                 }
 
                 foreach (var metrics in responseClient.Metrics)
                 {
                     metrics.AgentId = agent.AgentId;
-                    _repository.Create(metrics);
+                    await _repository.CreateAsync(metrics);
                 }
             }
-            return Task.CompletedTask;
+
         }
     }
 }

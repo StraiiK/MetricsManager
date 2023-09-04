@@ -24,6 +24,7 @@ using Polly;
 using Microsoft.OpenApi.Models;
 using MetricsManager.Schedule.Jobs;
 using MetricsManager.Schedule;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetricsManager
 {
@@ -37,11 +38,20 @@ namespace MetricsManager
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public async void ConfigureServices(IServiceCollection services)
         {
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
             var connectionManager = new ConnectionManager();
+
+            using (var context = new MetricsDbContext(connectionManager))
+            {
+                await context.Database.MigrateAsync();
+                await context.SaveChangesAsync();
+            }
+
+            services.AddDbContext<MetricsDbContext>();
+            services.AddTransient<MetricsDbContext>();
 
             services.AddSwaggerGen();
             services.AddControllers();
@@ -50,21 +60,21 @@ namespace MetricsManager
 
             services.AddSingleton(mapper);
             services.AddSingleton<IConnectionManager>(connectionManager);
-            services.AddSingleton<IAgentRepository, AgentRepository>();
-            services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
-            services.AddSingleton<IDotNetMetricsRepository, DotNetMetricsRepository>();
-            services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
-            services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
-            services.AddSingleton<IRomMetricsRepository, RomMetricsRepository>();
+            services.AddTransient<IAgentRepository, AgentRepository>();
+            services.AddTransient<ICpuMetricsRepository, CpuMetricsRepository>();
+            services.AddTransient<IDotNetMetricsRepository, DotNetMetricsRepository>();
+            services.AddTransient<INetworkMetricsRepository, NetworkMetricsRepository>();
+            services.AddTransient<IRamMetricsRepository, RamMetricsRepository>();
+            services.AddTransient<IRomMetricsRepository, RomMetricsRepository>();
 
             services.AddHostedService<QuartzHostedService>();
             services.AddSingleton<IJobFactory, SingletonJobFactory>();
             services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-            services.AddSingleton<CpuMetricJob>();
-            services.AddSingleton<DotNetMetricJob>();
-            services.AddSingleton<NetworkMetricJob>();
-            services.AddSingleton<RamMetricJob>();
-            services.AddSingleton<RomMetricJob>();
+            services.AddTransient<CpuMetricJob>();
+            services.AddTransient<DotNetMetricJob>();
+            services.AddTransient<NetworkMetricJob>();
+            services.AddTransient<RamMetricJob>();
+            services.AddTransient<RomMetricJob>();
             services.AddSingleton(new JobSchedule(jobType: typeof(CpuMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(DotNetMetricJob), cronExpression: "0/5 * * * * ?"));
             services.AddSingleton(new JobSchedule(jobType: typeof(NetworkMetricJob), cronExpression: "0/5 * * * * ?"));
@@ -76,13 +86,6 @@ namespace MetricsManager
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
             
-            services.AddFluentMigratorCore()
-                .ConfigureRunner(rb => rb.AddSQLite()
-                .WithGlobalConnectionString(connectionManager.ConnectionString)
-                .ScanIn(typeof(Startup).Assembly).For.Migrations()
-                ).AddLogging(lb => lb
-                .AddFluentMigratorConsole());
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -107,10 +110,8 @@ namespace MetricsManager
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IMigrationRunner runner)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            runner.MigrateUp();
-
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {

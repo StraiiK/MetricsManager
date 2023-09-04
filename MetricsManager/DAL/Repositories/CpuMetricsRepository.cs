@@ -3,90 +3,80 @@ using Dapper;
 using MetricsManager.DAL.Interfaces;
 using MetricsManager.DAL.Models;
 using MetricsManager.DTO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.DAL.Repositories
 {
     public class CpuMetricsRepository : ICpuMetricsRepository
     {
-        private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricsDbContext _dbContext;
 
-        public CpuMetricsRepository(IConnectionManager connectionManager, IMapper mapper)
+        public CpuMetricsRepository(IMapper mapper, MetricsDbContext dbContext)
         {
-            _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
 
-        public IList<CpuMetricDto> GetByPeriodFromAgent(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<CpuMetricDto>> GetByPeriodFromAgentAsync(int agentId, DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE AgentId = @agentId " +
-                    "AND time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    agentId = agentId,
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<CpuMetricDto>>(result);
-            };
+            var result = await _dbContext.CpuMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) 
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime) 
+                && metric.AgentId == agentId)
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<CpuMetricDto>>(result);
         }
 
-        public IList<CpuMetricDto> GetByPeriodFromAllCluster(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<CpuMetricDto>> GetByPeriodFromAllClusterAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics WHERE time >= @fromTime AND time <= @toTime ORDER BY Id DESC",
-                new
-                {
-                    fromTime = UnixTimeConverter.ToUnixTime(fromTime),
-                    toTime = UnixTimeConverter.ToUnixTime(toTime)
-                }).ToList();
-                return _mapper.Map<List<CpuMetricDto>>(result);
-            };
+            var result = await _dbContext.CpuMetric
+                .AsNoTracking()
+                .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime)
+                && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
+                .OrderByDescending(metric => metric.AgentId)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<CpuMetricDto>>(result);
         }
 
-        public IList<CpuMetricDto> GetAll()
+        public async Task <IList<CpuMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<CpuMetricDal>("SELECT * FROM CpuMetrics ORDER BY Id DESC").ToList();
-                return _mapper.Map<List<CpuMetricDto>>(result);
-            };
+            var result = await _dbContext.CpuMetric
+                .AsNoTracking()
+                .OrderByDescending(metric => metric.Id)
+                .ToListAsync(cancellationToken);
+            return _mapper.Map<List<CpuMetricDto>>(result);
         }
 
-        public void Create(CpuMetricDto item)
+        public async Task CreateAsync(CpuMetricDto item, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<CpuMetricDal>(item);
-                connection.Execute("INSERT INTO CpuMetrics(agentId, value, time) VALUES(@agentId, @value, @time)",
-                new
-                {
-                    agentId = item.AgentId,
-                    value = metrics.Value,
-                    time = metrics.Time
-                });
-            }
+            await _dbContext.CpuMetric.AddAsync(_mapper.Map<CpuMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public DateTimeOffset GetLastOfTime(int agentId)
+        public async Task <DateTimeOffset> GetLastOfTimeAsync(int agentId, CancellationToken cancellationToken = default)
         {
-            using(var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.QuerySingle<long>("SELECT IFNULL(max(Time), 0) FROM CpuMetrics WHERE AgentId = @agentId",
-                new
-                {
-                    agentId = agentId
-                });
-                return UnixTimeConverter.FromUnixTime(result); 
-            }
+            var result = await _dbContext.CpuMetric
+                .AsNoTracking()
+                .Where(metric => metric.AgentId == agentId)
+                .Select(metric => (long?)metric.Time)
+                .MaxAsync(cancellationToken) ?? 0;
+            return UnixTimeConverter.FromUnixTime(result);
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

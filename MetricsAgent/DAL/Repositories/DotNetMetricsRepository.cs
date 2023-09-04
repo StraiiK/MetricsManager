@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.DAL.Repositories
 {
@@ -22,25 +23,25 @@ namespace MetricsAgent.DAL.Repositories
             _dbContext = dbContext;
         }
 
-        public IList<DotNetMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<DotNetMetricDto>> GetByTimePeriodAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.DotNetMetrics
+            var result = await _dbContext.DotNetMetrics
                 .AsNoTracking()
                 .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
-                .OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<DotNetMetricDto>>(result);
+                .OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<DotNetMetricDto>>(result);
         }
 
-        public IList<DotNetMetricDto> GetAll()
+        public async Task<IList<DotNetMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.DotNetMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<DotNetMetricDto>>(result);
+            var result = await _dbContext.DotNetMetrics.AsNoTracking().OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<DotNetMetricDto>>(result);
         }
 
-        public void Create(DotNetMetricDto item)
+        public async Task CreateAsync(DotNetMetricDto item, CancellationToken cancellationToken = default)
         {
-            _dbContext.DotNetMetrics.Add(_mapper.Map<DotNetMetricDal>(item));
-            _dbContext.SaveChanges();
+            await _dbContext.DotNetMetrics.AddAsync(_mapper.Map<DotNetMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

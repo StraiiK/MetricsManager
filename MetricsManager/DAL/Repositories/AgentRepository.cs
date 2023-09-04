@@ -3,8 +3,11 @@ using Dapper;
 using MetricsManager.DAL.Interfaces;
 using MetricsManager.DAL.Models;
 using MetricsManager.DTO;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.DAL.Repositories
 {
@@ -12,31 +15,29 @@ namespace MetricsManager.DAL.Repositories
     {
         private IConnectionManager _connectionManager;
         private IMapper _mapper;
+        private MetricsDbContext _dbContext;
 
-        public AgentRepository(IConnectionManager connectionManager, IMapper mapper)
+        public AgentRepository(IConnectionManager connectionManager, IMapper mapper, MetricsDbContext dbContext)
         {
             _connectionManager = connectionManager;
             _mapper = mapper;
+            _dbContext = dbContext;
         }
-        public void Create(AgentDto item)
+        public async Task CreateAsync(AgentDto item, CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var metrics = _mapper.Map<AgentDal>(item);
-                connection.Execute("INSERT INTO Agents(AgentUrl) VALUES(@agentUrl)",
-                new
-                {                    
-                    agentUrl = metrics.AgentUrl
-                });
-            }
+            await _dbContext.Agent.AddAsync(_mapper.Map<AgentDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        public IList<AgentDto> GetAll()
+
+        public async Task<IList<AgentDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            using (var connection = _connectionManager.CreateOpenedConnection())
-            {
-                var result = connection.Query<AgentDal>("SELECT * FROM Agents").ToList();
-                return _mapper.Map<List<AgentDto>>(result);
-            };
+            var result = await _dbContext.Agent.ToListAsync(cancellationToken);
+            return _mapper.Map<IList<AgentDto>>(result);
+        }
+
+        public void Dispose()
+        {
+            _dbContext?.Dispose();
         }
     }
 }

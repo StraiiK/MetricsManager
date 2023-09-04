@@ -36,7 +36,7 @@ namespace MetricsAgent
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
+        public async void ConfigureServices(IServiceCollection services)
         {
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
             var mapper = mapperConfiguration.CreateMapper();
@@ -44,8 +44,8 @@ namespace MetricsAgent
 
             using (var context = new MetricDbContext(connectionManager))
             {
-                context.Database.Migrate();
-                context.SaveChanges();
+                await context.Database.MigrateAsync();
+                await context.SaveChangesAsync();
             }
 
             services.AddControllers();

@@ -13,22 +13,20 @@ namespace MetricsAgent.Schedule.Jobs
     public class RamMetricJob : IJob
     {
         private IRamMetricsRepository _repository;
-        private PerformanceCounter _RamCounter;
+        private PerformanceCounter _ramCounter;
 
         public RamMetricJob(IRamMetricsRepository repository)
         {
             _repository = repository;
-            _RamCounter = new PerformanceCounter("Memory", "Available MBytes");
+            _ramCounter = new PerformanceCounter("Memory", "Available MBytes");
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
-            var RamUsage = _RamCounter.NextValue();
+            var ramUsageInPrecents = _ramCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new RamMetricDto { Time = time, Value = Convert.ToInt32(RamUsage) });
-
-            return Task.CompletedTask;
+            await _repository.CreateAsync(new RamMetricDto { Time = time, Value = Convert.ToInt32(ramUsageInPrecents) });
         }
     }
 }

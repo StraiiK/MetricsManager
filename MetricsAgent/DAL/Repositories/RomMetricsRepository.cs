@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.DAL.Repositories
 {
@@ -22,25 +23,25 @@ namespace MetricsAgent.DAL.Repositories
             _dbContext = dbContext;
         }
 
-        public IList<RomMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<RomMetricDto>> GetByTimePeriodAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.RomMetrics
+            var result = await _dbContext.RomMetrics
                 .AsNoTracking()
                 .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
-                .OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<RomMetricDto>>(result);
+                .OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<RomMetricDto>>(result);
         }
 
-        public IList<RomMetricDto> GetAll()
+        public async Task<IList<RomMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.RomMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<RomMetricDto>>(result);
+            var result = await _dbContext.RomMetrics.AsNoTracking().OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<RomMetricDto>>(result);
         }
 
-        public void Create(RomMetricDto item)
+        public async Task CreateAsync(RomMetricDto item, CancellationToken cancellationToken = default)
         {
-            _dbContext.RomMetrics.Add(_mapper.Map<RomMetricDal>(item));
-            _dbContext.SaveChanges();
+            await _dbContext.RomMetrics.AddAsync(_mapper.Map<RomMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

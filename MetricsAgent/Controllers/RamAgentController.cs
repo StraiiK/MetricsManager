@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace MetricsAgent.Controllers
 {
@@ -30,19 +32,19 @@ namespace MetricsAgent.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] RamMetricCreateRequest request)
+        public async Task<IActionResult> CreateAsync([FromBody] RamMetricCreateRequest request, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@requestTime}_{@requestValue}", request.Time, request.Value);
-            _repository.Create(_mapper.Map<RamMetricDto>(request));
+            await _repository.CreateAsync(_mapper.Map<RamMetricDto>(request));
             return Ok();
         }
 
         [HttpGet("getall")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var response = new AllRamMetricsResponse()
             {
-                Metrics = _repository.GetAll()
+                Metrics = await _repository.GetAllAsync()
             };
 
             _logger.LogInformation($"Метод отработал");
@@ -50,13 +52,13 @@ namespace MetricsAgent.Controllers
         }
 
         [HttpGet("getbyperiod")]
-        public IActionResult GetByPeriod([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
+        public async Task<IActionResult> GetByPeriodAsync([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
 
             var response = new AllRamMetricsResponse()
             {
-                Metrics = _repository.GetByTimePeriod(fromTime, toTime)
+                Metrics = await _repository.GetByTimePeriodAsync(fromTime, toTime)
             };
 
             _logger.LogInformation("Метод отработал");

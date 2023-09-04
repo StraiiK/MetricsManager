@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.Controllers
 {
@@ -28,18 +30,19 @@ namespace MetricsAgent.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] DotNetMetricCreateRequest request)
+        public async Task<IActionResult> CreateAsync([FromBody] DotNetMetricCreateRequest request, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@requestTime}_{@requestValue}", request.Time, request.Value);
-            _repository.Create(_mapper.Map<DotNetMetricDto>(request));
+            await _repository.CreateAsync(_mapper.Map<DotNetMetricDto>(request));
             return Ok();
         }
+
         [HttpGet("getall")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var response = new AllDotNetMetricsResponse()
             {
-                Metrics = _repository.GetAll()
+                Metrics = await _repository.GetAllAsync()
             };
 
             _logger.LogInformation($"Метод отработал");
@@ -47,13 +50,13 @@ namespace MetricsAgent.Controllers
         }
 
         [HttpGet("getbyperiod")]
-        public IActionResult GetByPeriod([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime)
+        public async Task<IActionResult> GetByPeriodAsync([FromQuery] DateTimeOffset fromTime, [FromQuery] DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@fromTime}_{@toTime}", fromTime, toTime);
 
             var response = new AllDotNetMetricsResponse()
             {
-                Metrics = _repository.GetByTimePeriod(fromTime, toTime)
+                Metrics = await _repository.GetByTimePeriodAsync(fromTime, toTime)
             };
 
             _logger.LogInformation("Метод отработал");

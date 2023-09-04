@@ -6,6 +6,7 @@ using MetricsManager.Responses;
 using MetricsManager.Requests;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace MetricsManager.Client
 {
@@ -22,7 +23,7 @@ namespace MetricsManager.Client
             _options = options;
         }
 
-        public async Task <AllCpuMetricsApiResponse> GetCpuMetrics(GetAllCpuMetricsApiRequest request)
+        public async Task <AllCpuMetricsApiResponse> GetCpuMetricsAsync(GetAllCpuMetricsApiRequest request, CancellationToken cancellationToken = default)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -31,9 +32,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 using var responseStream = await response.Content.ReadAsStreamAsync();
-                var result = await JsonSerializer.DeserializeAsync<AllCpuMetricsApiResponse>(responseStream, _options);
+                var result = await JsonSerializer.DeserializeAsync<AllCpuMetricsApiResponse>(responseStream, _options, cancellationToken);
                 return result;
             }
             catch (Exception ex)
@@ -43,7 +44,7 @@ namespace MetricsManager.Client
             return null;
         }
 
-        public AllDotNetMetricsApiResponse GetDotNetMetrics(GetAllDotNetMetricsApiRequest request)
+        public async Task<AllDotNetMetricsApiResponse> GetDotNetMetricsAsync(GetAllDotNetMetricsApiRequest request, CancellationToken cancellationToken = default)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -52,9 +53,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = _httpClient.SendAsync(httpRequest).Result;
-                using var responseStream = response.Content.ReadAsStreamAsync().Result;
-                var result = JsonSerializer.DeserializeAsync<AllDotNetMetricsApiResponse>(responseStream, _options).Result;
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = await JsonSerializer.DeserializeAsync<AllDotNetMetricsApiResponse>(responseStream, _options);
                 return result;
             }
             catch (Exception ex)
@@ -64,7 +65,7 @@ namespace MetricsManager.Client
             return null;
         }
 
-        public AllNetworkMetricsApiResponse GetNetworkMetrics(GetAllNetworkMetricsApiRequest request)
+        public async Task<AllNetworkMetricsApiResponse> GetNetworkMetricsAsync(GetAllNetworkMetricsApiRequest request, CancellationToken cancellationToken = default)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -73,9 +74,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = _httpClient.SendAsync(httpRequest).Result;
-                using var responseStream = response.Content.ReadAsStreamAsync().Result;
-                var result = JsonSerializer.DeserializeAsync<AllNetworkMetricsApiResponse>(responseStream, _options).Result;
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = await JsonSerializer.DeserializeAsync<AllNetworkMetricsApiResponse>(responseStream, _options);
                 return result;
             }
             catch (Exception ex)
@@ -85,7 +86,7 @@ namespace MetricsManager.Client
             return null;
         }
 
-        public AllRamMetricsApiResponse GetRamMetrics(GetAllRamMetricsApiRequest request)
+        public async Task<AllRamMetricsApiResponse> GetRamMetricsAsync(GetAllRamMetricsApiRequest request, CancellationToken cancellationToken = default)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -94,9 +95,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = _httpClient.SendAsync(httpRequest).Result;
-                using var responseStream = response.Content.ReadAsStreamAsync().Result;
-                var result = JsonSerializer.DeserializeAsync<AllRamMetricsApiResponse>(responseStream, _options).Result;
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = await JsonSerializer.DeserializeAsync<AllRamMetricsApiResponse>(responseStream, _options);
                 return result;
             }
             catch (Exception ex)
@@ -106,7 +107,7 @@ namespace MetricsManager.Client
             return null;
         }
 
-        public AllRomMetricsApiResponse GetRomMetrics(GetAllRomMetricsApiRequest request)
+        public async Task<AllRomMetricsApiResponse> GetRomMetricsAsync(GetAllRomMetricsApiRequest request, CancellationToken cancellationToken = default)
         {
             var fromTime = Uri.EscapeDataString(request.FromTime.ToString("o"));
             var toTime = Uri.EscapeDataString(request.ToTime.ToString("o"));
@@ -115,9 +116,9 @@ namespace MetricsManager.Client
 
             try
             {
-                HttpResponseMessage response = _httpClient.SendAsync(httpRequest).Result;
-                using var responseStream = response.Content.ReadAsStreamAsync().Result;
-                var result = JsonSerializer.DeserializeAsync<AllRomMetricsApiResponse>(responseStream, _options).Result;
+                HttpResponseMessage response = await _httpClient.SendAsync(httpRequest);
+                using var responseStream = await response.Content.ReadAsStreamAsync();
+                var result = await JsonSerializer.DeserializeAsync<AllRomMetricsApiResponse>(responseStream, _options);
                 return result;
             }
             catch (Exception ex)

@@ -21,14 +21,12 @@ namespace MetricsAgent.Schedule.Jobs
             _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
         }
 
-        public Task Execute(IJobExecutionContext context)
+        public async Task Execute(IJobExecutionContext context)
         {
             var cpuUsageInPrecents = _cpuCounter.NextValue();
             var time = DateTimeOffset.UtcNow;
 
-            _repository.Create(new CpuMetricDto { Time = time, Value = Convert.ToInt32(cpuUsageInPrecents) });
-
-            return Task.CompletedTask;
+            await _repository.CreateAsync(new CpuMetricDto {Time = time, Value = Convert.ToInt32(cpuUsageInPrecents)});                       
         }
     }
 }

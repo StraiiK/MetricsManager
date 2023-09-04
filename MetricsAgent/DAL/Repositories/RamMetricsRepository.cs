@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Dapper;
 using MetricsAgent.DAL.Interfaces;
 using MetricsAgent.DAL.Models;
 using MetricsAgent.DTO;
@@ -8,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsAgent.DAL.Repositories
 {
@@ -22,25 +23,25 @@ namespace MetricsAgent.DAL.Repositories
             _dbContext = dbContext;
         }
 
-        public IList<RamMetricDto> GetByTimePeriod(DateTimeOffset fromTime, DateTimeOffset toTime)
+        public async Task<IList<RamMetricDto>> GetByTimePeriodAsync(DateTimeOffset fromTime, DateTimeOffset toTime, CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.RamMetrics
+            var result = await _dbContext.RamMetrics
                 .AsNoTracking()
                 .Where(metric => metric.Time >= UnixTimeConverter.ToUnixTime(fromTime) && metric.Time <= UnixTimeConverter.ToUnixTime(toTime))
-                .OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<RamMetricDto>>(result);
+                .OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<RamMetricDto>>(result);
         }
 
-        public IList<RamMetricDto> GetAll()
+        public async Task<IList<RamMetricDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var result = _dbContext.RamMetrics.AsNoTracking().OrderByDescending(metric => metric.Id);
-            return _mapper.Map<List<RamMetricDto>>(result);
+            var result = await _dbContext.RamMetrics.AsNoTracking().OrderByDescending(metric => metric.Id).ToListAsync();
+            return _mapper.Map<IList<RamMetricDto>>(result);
         }
 
-        public void Create(RamMetricDto item)
+        public async Task CreateAsync(RamMetricDto item, CancellationToken cancellationToken = default)
         {
-            _dbContext.RamMetrics.Add(_mapper.Map<RamMetricDal>(item));
-            _dbContext.SaveChanges();
+            await _dbContext.RamMetrics.AddAsync(_mapper.Map<RamMetricDal>(item), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void Dispose()

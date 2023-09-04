@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MetricsManager.Controllers
 {
@@ -26,31 +28,19 @@ namespace MetricsManager.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult RegisterAgent([FromBody] RegisterAgentRequest agentInfo)
+        public async Task<IActionResult> RegisterAgentAsync([FromBody] RegisterAgentRequest agentInfo, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("Параметры метода:{@agentUrl}", agentInfo.AgentUrl);
-            _repository.Create(_mapper.Map<AgentDto>(agentInfo));
-            return Ok();
-        }
-
-        [HttpPut("enable/{agentId}")]
-        public IActionResult EnableAgentById([FromRoute] int agentId)
-        {
-            return Ok();
-        }
-
-        [HttpPut("disable/{agentId}")]
-        public IActionResult DisableAgentById([FromRoute] int agentId)
-        {
+            await _repository.CreateAsync(_mapper.Map<AgentDto>(agentInfo));
             return Ok();
         }
 
         [HttpGet("getall")]
-        public IActionResult GetAll()
+        public async Task <IActionResult> GetAllAsync(CancellationToken cancellationToken = default)
         {
             var response = new AllAgentsResponse()
             {
-                Agents = _repository.GetAll()
+                Agents = await _repository.GetAllAsync()
             };
 
             _logger.LogInformation($"Метод отработал");
