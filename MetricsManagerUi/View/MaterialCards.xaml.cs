@@ -25,18 +25,17 @@ namespace MetricsManagerUi.View
         {
             InitializeComponent();
 
-            ColumnServiesValues = new SeriesCollection
+            ColumnSeriesValues = new SeriesCollection
             {
                 new ColumnSeries
                     {
-                    Values = new ChartValues<double> {
-                    10,20,30,40,50,60,70,80,90.100 }
+                        Values = new ChartValues<double> { 10,20,30,40,50,60,70,80,90.100 }
                     }
             };
             DataContext = this;
         }
 
-        public SeriesCollection ColumnServiesValues { get; set; }
+        public SeriesCollection ColumnSeriesValues { get; set; }
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName = null)
