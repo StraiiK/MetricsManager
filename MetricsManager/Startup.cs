@@ -37,7 +37,6 @@ namespace MetricsManager
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public async void ConfigureServices(IServiceCollection services)
         {
             var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new MapperProfile()));
@@ -109,7 +108,6 @@ namespace MetricsManager
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseSwagger();
