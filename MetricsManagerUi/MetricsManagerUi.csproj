@@ -11,4 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ViewModels\Base\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\StraiK\source\repos\MetricsManager\MetricsManagerUi\.editorconfig" />
+  </ItemGroup>
+
 </Project>
